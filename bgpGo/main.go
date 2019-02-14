@@ -33,7 +33,7 @@ func main() {
 	// neighbor configuration
 	n := &api.Peer{
 		Conf: &api.PeerConf{
-			NeighborAddress: "10.20.0.10",
+			NeighborAddress: "10.20.0.100",
 			PeerAs:          60001,
 		},
 	}
@@ -46,7 +46,7 @@ func main() {
 
 	// add routes
 	nlri, _ := ptypes.MarshalAny(&api.IPAddressPrefix{
-		Prefix:    "10.20.0.2",
+		Prefix:    "10.1.4.0",
 		PrefixLen: 24,
 	})
 
