@@ -65,6 +65,11 @@ Finally, check if your network is set up by viewing the routing table in the gat
 ```
 $ netstat -rn
 ```
+An example of the Routing Table will appear like this:
+
+![routing_table_example](docs/img/routingTableExample.png "routing table figure")
+
+
 You will also be able to ping the connection.
 
 #Referenced https://www.brianlinkletter.com/how-to-build-a-network-of-linux-routers-using-quagga/
