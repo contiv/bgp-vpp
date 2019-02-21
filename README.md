@@ -1,3 +1,5 @@
+![VPP_Network](docs/img/VPP_Network_Setup_with_BGP.png "VPP Network Setup")
+
 # bgp-vpp
 A BGP Speaker implementation for Contiv-VPP
 
