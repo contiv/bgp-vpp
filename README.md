@@ -2,6 +2,9 @@
 A BGP Speaker implementation for Contiv-VPP
 
 # Quagga Setup
+
+![quagga](docs/img/quagga figgure.png "quagga figure")
+
 First, you need to enable the zebra feature in the Global configuration using:
 //This will be done in the Gateway Configuration File
 
