@@ -1,5 +1,3 @@
-# Referenced https://www.brianlinkletter.com/how-to-build-a-network-of-linux-routers-using-quagga/
-
 # bgp-vpp
 A BGP Speaker implementation for Contiv-VPP
 
@@ -64,3 +62,5 @@ Finally, check if your network is set up by viewing the routing table in the gat
 $ netstat -rn
 ```
 You will also be able to ping the connection.
+
+#Referenced https://www.brianlinkletter.com/how-to-build-a-network-of-linux-routers-using-quagga/
