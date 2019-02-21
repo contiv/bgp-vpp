@@ -36,8 +36,9 @@ ripd=no
 ripngd=no
 isisd=no
 babeld=no
-Save the file and quit the editor.
+
 ```
+Save the file and quit the editor.
 Fourth, create config files for the zebra daemon.
 ```
 # cp /usr/share/doc/quagga/examples/zebra.conf.sample /etc/quagga/zebra.conf
