@@ -1,5 +1,7 @@
 package bgp
 
+//go:generate protoc --proto_path=model --proto_path=$GOPATH/src --gogo_out=model model/bgp.proto
+
 import (
 	"log"
 
