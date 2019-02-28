@@ -1,0 +1,28 @@
+{
+  "index":"${spd_index}",
+  "interfaces": [
+    { "name": "${interface_name}" }
+  ],
+  "policy_entries": [
+    {
+      "priority": 10,
+      "is_outbound": false,
+      "remote_addr_start": "${remote_addr}",
+      "remote_addr_stop": "${remote_addr}",
+      "local_addr_start": "${local_addr}",
+      "local_addr_stop": "${local_addr}",
+      "action": 3,
+      "sa_index": "${sa_index_2}"
+    },
+    {
+      "priority": 10,
+      "is_outbound": true,
+      "remote_addr_start": "${remote_addr}",
+      "remote_addr_stop": "${remote_addr}",
+      "local_addr_start": "${local_addr}",
+      "local_addr_stop": "${local_addr}",
+      "action": 3,
+      "sa_index": "${sa_index_1}"
+    }
+  ]
+}

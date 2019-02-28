@@ -1,0 +1,4 @@
+{
+  "ip_address": "${ip}",
+  "interface": "${interface}"
+}

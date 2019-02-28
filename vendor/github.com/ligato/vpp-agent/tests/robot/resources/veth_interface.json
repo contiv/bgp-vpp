@@ -1,0 +1,9 @@
+{
+  "name": "${name}",
+  "type": "VETH",
+  "enabled": ${enabled},
+  "phys_address": "${mac}",
+  "veth": {
+    "peer_if_name": "${peer}"
+  }
+}
