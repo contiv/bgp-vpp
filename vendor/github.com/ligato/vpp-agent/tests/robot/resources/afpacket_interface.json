@@ -1,0 +1,11 @@
+{
+  "name": "${name}",
+  "type": "AF_PACKET",
+  "enabled": ${enabled},
+  "phys_address": "${mac}",
+  "mtu": ${mtu},
+  "vrf": ${vrf},
+  "afpacket": {
+    "host_if_name": "${host_int}"
+  }
+}

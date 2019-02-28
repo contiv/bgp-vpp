@@ -1,0 +1,6 @@
+{
+  "type": ${type},
+  "vrf_id": ${id},
+  "dst_network": "${ip}/${prefix}",
+  "via_vrf_id": ${next_hop_vrf}
+}

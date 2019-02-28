@@ -24,10 +24,13 @@
 #   go-tests = true
 #   unused-packages = true
 
+[[constraint]]
+  name = "github.com/ligato/vpp-agent"
+  branch = "master"
 
 [[constraint]]
   name = "github.com/ligato/cn-infra"
-  branch = "master"
+  branch = "dev"
 
 [[override]]
   name = "github.com/satori/go.uuid"
