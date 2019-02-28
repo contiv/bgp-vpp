@@ -2,6 +2,7 @@ package bgp
 
 import (
 	"github.com/ligato/cn-infra/infra"
+	"github.com/ligato/cn-infra/rpc/rest"
 	"log"
 )
 
@@ -10,14 +11,12 @@ type BgpPlugin struct {
 	//figure out how to plug the gobgp library into this
 }
 
-
 //Deps is only for external dependencies
 type Deps struct {
 	infra.PluginDeps
+	Rest *rest.Plugin
 	//KVSchedulser kvs.KVScheduler
 }
-
-
 
 func (p *BgpPlugin) String() string {
 	return "HelloWorld"
