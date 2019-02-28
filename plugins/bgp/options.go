@@ -1,5 +1,9 @@
 package bgp
 
+import (
+	"github.com/ligato/cn-infra/rpc/rest"
+)
+
 // DefaultPlugin is a default instance of IfPlugin.
 var DefaultPlugin = *NewPlugin()
 
@@ -9,7 +13,8 @@ func NewPlugin(opts ...Option) *BgpPlugin {
 
 	p.PluginName = "bgp-plugin"
 	//p.KVScheduler = &kvscheduler.DefaultPlugin
-	
+	p.Rest = &rest.DefaultPlugin
+
 	p.Setup()
 
 	for _, o := range opts {
