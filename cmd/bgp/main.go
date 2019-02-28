@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/contiv/bgp-vpp/plugins/bgp"
 	"github.com/ligato/cn-infra/agent"
 	"github.com/ligato/cn-infra/logging"
 	"github.com/ligato/cn-infra/logging/logmanager"
@@ -10,7 +11,7 @@ import (
 
 func main() {
 	// Create an instance of our plugin using its constructor.
-	p := NewBgpPlugin()
+	p := bgp.NewPlugin()
 
 	// Create new agent with our plugin instance.
 	a := agent.NewAgent(agent.Plugins(p))
@@ -31,6 +32,9 @@ type BgpAgent struct {
 	//KVScheduler  *kvscheduler.Scheduler
 	Rest         *rest.Plugin
 }
+
+
+
 
 // New creates new OsseusAgent instance.
 func New() *BgpAgent {
