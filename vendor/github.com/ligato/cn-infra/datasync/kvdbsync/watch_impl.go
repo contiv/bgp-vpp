@@ -15,6 +15,7 @@
 package kvdbsync
 
 import (
+	"context"
 	"time"
 
 	"github.com/ligato/cn-infra/datasync"
@@ -24,8 +25,10 @@ import (
 	"github.com/ligato/cn-infra/logging/logrus"
 )
 
-const (
-	resyncTimeout = time.Second * 15
+var (
+	// ResyncTimeout defines timeout used during
+	// resync after which resync will return an error.
+	ResyncTimeout = time.Second * 5
 )
 
 // WatchBrokerKeys implements go routines on top of Change & Resync channels.
@@ -70,7 +73,7 @@ func watchAndResyncBrokerKeys(resyncReg resync.Registration, changeChan chan dat
 	return keys, wasErr
 }
 
-func (keys *watchBrokerKeys) watchChanges(x keyval.ProtoWatchResp) {
+func (keys *watchBrokerKeys) watchChanges(x datasync.ProtoWatchResp) {
 	var prev datasync.LazyValue
 	if datasync.Delete == x.GetChangeType() {
 		_, prev = keys.adapter.base.LastRev().Del(x.GetKey())
@@ -79,7 +82,7 @@ func (keys *watchBrokerKeys) watchChanges(x keyval.ProtoWatchResp) {
 			syncbase.NewKeyVal(x.GetKey(), x, x.GetRevision()))
 	}
 
-	ch := NewChangeWatchResp(x, prev)
+	ch := NewChangeWatchResp(context.Background(), x, prev)
 	keys.changeChan <- ch
 	// TODO NICE-to-HAVE publish the err using the transport asynchronously
 }
@@ -112,8 +115,10 @@ func (keys *watchBrokerKeys) resyncRev() error {
 			if stop {
 				break
 			}
-			logrus.DefaultLogger().Debugf("registering key found in etcd %v", data.GetKey())
-			keys.adapter.base.LastRev().PutWithRevision(data.GetKey(), syncbase.NewKeyVal(data.GetKey(), data, data.GetRevision()))
+			logrus.DefaultLogger().Debugf("registering key found in KV: %q", data.GetKey())
+
+			keys.adapter.base.LastRev().PutWithRevision(data.GetKey(),
+				syncbase.NewKeyVal(data.GetKey(), data, data.GetRevision()))
 		}
 	}
 
@@ -122,7 +127,7 @@ func (keys *watchBrokerKeys) resyncRev() error {
 
 // Resync fills the resyncChan with the most recent snapshot (db.ListValues).
 func (keys *watchBrokerKeys) resync() error {
-	iterators := map[string] /*keyPrefix*/ datasync.KeyValIterator{}
+	iterators := map[string]datasync.KeyValIterator{}
 	for _, keyPrefix := range keys.prefixes {
 		it, err := keys.adapter.db.ListValues(keyPrefix)
 		if err != nil {
@@ -131,7 +136,7 @@ func (keys *watchBrokerKeys) resync() error {
 		iterators[keyPrefix] = NewIterator(it)
 	}
 
-	resyncEvent := syncbase.NewResyncEventDB(iterators)
+	resyncEvent := syncbase.NewResyncEventDB(context.Background(), iterators)
 	keys.resyncChan <- resyncEvent
 
 	select {
@@ -139,7 +144,7 @@ func (keys *watchBrokerKeys) resync() error {
 		if err != nil {
 			return err
 		}
-	case <-time.After(resyncTimeout):
+	case <-time.After(ResyncTimeout):
 		logrus.DefaultLogger().Warn("Timeout of resync callback")
 	}
 

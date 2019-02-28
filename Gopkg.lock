@@ -10,12 +10,21 @@
   revision = "1a2de0c21c94309923825da3df33a4381872c795"
 
 [[projects]]
-  digest = "1:4193e2871b655bdfc423d23d309bf45a97ff75399c2fe923e79cb15eefb985d7"
-  name = "github.com/bshuster-repo/logrus-logstash-hook"
-  packages = ["."]
+  digest = "1:600d64f7857a14d7715ce2795868c76b85e634fc13aba93b23431039fed2d9ea"
+  name = "github.com/coreos/etcd"
+  packages = [
+    "auth/authpb",
+    "clientv3",
+    "clientv3/namespace",
+    "etcdserver/api/v3rpc/rpctypes",
+    "etcdserver/etcdserverpb",
+    "mvcc/mvccpb",
+    "pkg/tlsutil",
+    "pkg/types",
+  ]
   pruneopts = ""
-  revision = "dbc1e22735aa6ed7bd9579a407c17bc7c4a4e046"
-  version = "v0.4.1"
+  revision = "27fc7e2296f506182f58ce846e48f36b34fe6842"
+  version = "v3.3.10"
 
 [[projects]]
   digest = "1:6098222470fe0172157ce9bbef5d2200df4edde17ee649c5d6e48330e4afa4c6"
@@ -50,22 +59,6 @@
   version = "v1.1.0"
 
 [[projects]]
-  digest = "1:d6b2b11e438ac3192f87dd1117ac16ee7ea57a43075a8e8b7dea5525d22bd001"
-  name = "github.com/evalphobia/logrus_fluent"
-  packages = ["."]
-  pruneopts = ""
-  revision = "76779e73f35d90f5a873e7feaf6691999b2c5db4"
-  version = "v0.4.0"
-
-[[projects]]
-  digest = "1:84b64cb974bbed3039f02472a1021fdc348bdd56080c3d467f4be9edeb33e43e"
-  name = "github.com/fluent/fluent-logger-golang"
-  packages = ["fluent"]
-  pruneopts = ""
-  revision = "7a6c9dcd7f14c2ed5d8c55c11b894e5455ee311b"
-  version = "v1.4.0"
-
-[[projects]]
   digest = "1:eb53021a8aa3f599d29c7102e65026242bdedce998a54837dc67f14b6a97c5fd"
   name = "github.com/fsnotify/fsnotify"
   packages = ["."]
@@ -82,12 +75,35 @@
   version = "v1.0.0"
 
 [[projects]]
+  digest = "1:54d5c6a784a9de9c836fc070d51d0689c3e99ee6d24dba8a36f0762039dae830"
+  name = "github.com/gogo/googleapis"
+  packages = ["google/rpc"]
+  pruneopts = ""
+  revision = "8558fb44d2f1fc223118afc694129d2c2d2924d1"
+  version = "v1.1.0"
+
+[[projects]]
   digest = "1:fd53b471edb4c28c7d297f617f4da0d33402755f58d6301e7ca1197ef0a90937"
   name = "github.com/gogo/protobuf"
-  packages = ["proto"]
+  packages = [
+    "gogoproto",
+    "jsonpb",
+    "proto",
+    "protoc-gen-gogo/descriptor",
+    "sortkeys",
+    "types",
+  ]
   pruneopts = ""
   revision = "ba06b47c162d49f2af050fb4c75bcbc86a159d5c"
   version = "v1.2.1"
+
+[[projects]]
+  digest = "1:dcfeb799fde743240068c98fc38e20caf91d3c3a6a97e9025eba9534cfbe22dd"
+  name = "github.com/gogo/status"
+  packages = ["."]
+  pruneopts = ""
+  revision = "23951469965b0104342ad7b9625586150b6baf5b"
+  version = "v1.0.2"
 
 [[projects]]
   branch = "master"
@@ -111,6 +127,18 @@
   pruneopts = ""
   revision = "a7962380ca08b5a188038c69871b8d3fbdf31e89"
   version = "v1.7.0"
+
+[[projects]]
+  digest = "1:9a0b2dd1f882668a3d7fbcd424eed269c383a16f1faa3a03d14e0dd5fba571b1"
+  name = "github.com/grpc-ecosystem/go-grpc-middleware"
+  packages = [
+    ".",
+    "auth",
+    "util/metautils",
+  ]
+  pruneopts = ""
+  revision = "c250d6563d4d4c20252cd865923440e829844f4e"
+  version = "v1.0.0"
 
 [[projects]]
   digest = "1:d14365c51dd1d34d5c79833ec91413bfbb166be978724f15701e17080dc06dec"
@@ -140,18 +168,30 @@
   version = "v1.0.2"
 
 [[projects]]
-  branch = "master"
-  digest = "1:bfd42bf7c39ac850669603e938c8cf62224a457f0010132543551b7ca68fe621"
+  branch = "dev"
+  digest = "1:8d64b7459e58eeb0665110fa096b78ce052fd377c3666c93713a1362695c8096"
   name = "github.com/ligato/cn-infra"
   packages = [
     "agent",
     "config",
+    "datasync",
+    "datasync/kvdbsync",
+    "datasync/kvdbsync/local",
+    "datasync/resync",
+    "datasync/syncbase",
+    "db/keyval",
+    "db/keyval/etcd",
+    "db/keyval/kvproto",
+    "health/statuscheck",
+    "health/statuscheck/model/status",
+    "idxmap",
+    "idxmap/mem",
     "infra",
     "logging",
-    "logging/logmanager",
     "logging/logrus",
     "logging/measure",
     "logging/measure/model/apitrace",
+    "rpc/grpc",
     "rpc/rest",
     "rpc/rest/security",
     "rpc/rest/security/model/access-security",
@@ -160,7 +200,24 @@
     "utils/safeclose",
   ]
   pruneopts = ""
-  revision = "a1aca54a7d7f7886b19a72ed196fa4df39da2679"
+  revision = "900a7284ac2c39c30e278571a2cafeb7bc82b051"
+
+[[projects]]
+  branch = "master"
+  digest = "1:171340cce5fa7e37dfe4e53eed8bcd70848801f198c8ed350784fb698aec3c4f"
+  name = "github.com/ligato/vpp-agent"
+  packages = [
+    "api/genericmanager",
+    "pkg/models",
+    "plugins/kvscheduler",
+    "plugins/kvscheduler/api",
+    "plugins/kvscheduler/internal/graph",
+    "plugins/kvscheduler/internal/registry",
+    "plugins/kvscheduler/internal/utils",
+    "plugins/orchestrator",
+  ]
+  pruneopts = ""
+  revision = "3de04aba21d620420d5667dfbac32c3de8c31235"
 
 [[projects]]
   digest = "1:961dc3b1d11f969370533390fdf203813162980c858e1dabe827b60940c909a5"
@@ -214,14 +271,6 @@
   version = "v1.2.0"
 
 [[projects]]
-  digest = "1:210286d0cb60ffe28f1ca00b664029e8943009f95d06d8f8c336301b28e1aee5"
-  name = "github.com/philhofer/fwd"
-  packages = ["."]
-  pruneopts = ""
-  revision = "bb6d471dc95d4fe11e432687f8b70ff496cf3136"
-  version = "v1.0.0"
-
-[[projects]]
   digest = "1:1d7e1867c49a6dd9856598ef7c3123604ea3daabf5b83f303ff457bcbc410b1d"
   name = "github.com/pkg/errors"
   packages = ["."]
@@ -240,10 +289,7 @@
 [[projects]]
   digest = "1:9a3c631555e0351fdc4e696577bb63afd90c399d782a8462dba9d100d7021db3"
   name = "github.com/sirupsen/logrus"
-  packages = [
-    ".",
-    "hooks/syslog",
-  ]
+  packages = ["."]
   pruneopts = ""
   revision = "e1e72e9de974bd926e5c56f83753fba2df402ce5"
   version = "v1.3.0"
@@ -290,14 +336,6 @@
   packages = ["."]
   pruneopts = ""
   revision = "d104d259b3380cb653bb793756823c3c41b37b53"
-
-[[projects]]
-  digest = "1:23ed2a28cfc147d46f7fbf4d85f83f6d659e15eac4ad1c16c4d32b19da5bd2fa"
-  name = "github.com/tinylib/msgp"
-  packages = ["msgp"]
-  pruneopts = ""
-  revision = "af6442a0fcf6e2a1b824f70dd0c734f01e817751"
-  version = "v1.1.0"
 
 [[projects]]
   branch = "master"
@@ -412,6 +450,7 @@
     "encoding",
     "encoding/proto",
     "grpclog",
+    "health/grpc_health_v1",
     "internal",
     "internal/backoff",
     "internal/binarylog",
@@ -452,10 +491,16 @@
     "github.com/golang/protobuf/ptypes",
     "github.com/golang/protobuf/ptypes/any",
     "github.com/ligato/cn-infra/agent",
+    "github.com/ligato/cn-infra/datasync",
+    "github.com/ligato/cn-infra/datasync/kvdbsync",
+    "github.com/ligato/cn-infra/datasync/kvdbsync/local",
+    "github.com/ligato/cn-infra/db/keyval/etcd",
+    "github.com/ligato/cn-infra/health/statuscheck",
     "github.com/ligato/cn-infra/infra",
     "github.com/ligato/cn-infra/logging",
-    "github.com/ligato/cn-infra/logging/logmanager",
     "github.com/ligato/cn-infra/rpc/rest",
+    "github.com/ligato/vpp-agent/plugins/kvscheduler",
+    "github.com/ligato/vpp-agent/plugins/orchestrator",
     "github.com/osrg/gobgp/api",
     "github.com/osrg/gobgp/pkg/server",
     "github.com/sirupsen/logrus",
