@@ -2,13 +2,13 @@ package main
 
 import (
 	"context"
-	"time"
-
+	"fmt"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/any"
 	api "github.com/osrg/gobgp/api"
 	gobgp "github.com/osrg/gobgp/pkg/server"
 	log "github.com/sirupsen/logrus"
+	"time"
 )
 
 func main() {
@@ -33,28 +33,41 @@ func main() {
 	}
 
 	// neighbor configuration
-	n := &api.Peer{
+/*	wone := &api.Peer{
 		Conf: &api.PeerConf{
 			NeighborAddress: "10.20.0.10",
-			PeerAs:          65002,
+			PeerAs:          64512,
 		},
 	}
 
-	j := &api.Peer{
+	wtwo := &api.Peer{
 		Conf: &api.PeerConf{
 			NeighborAddress: "10.20.0.11",
-			PeerAs:          65003,
+			PeerAs:          64512,
+		},
+	}
+*/
+	g := &api.Peer{
+		Conf: &api.PeerConf{
+			NeighborAddress: "10.20.0.100",
+			PeerAs:          64512,
 		},
 	}
 
-	if err := s.AddPeer(context.Background(), &api.AddPeerRequest{
-		Peer: n,
+/*	if err := s.AddPeer(context.Background(), &api.AddPeerRequest{
+		Peer: wone,
 	}); err != nil {
 		log.Fatal(err)
 	}
 
 	if err := s.AddPeer(context.Background(), &api.AddPeerRequest{
-		Peer: j,
+		Peer: wtwo,
+	}); err != nil {
+		log.Fatal(err)
+	}*/
+
+	if err := s.AddPeer(context.Background(), &api.AddPeerRequest{
+		Peer: g,
 	}); err != nil {
 		log.Fatal(err)
 	}
@@ -84,6 +97,59 @@ func main() {
 		log.Fatal(err)
 	}
 
+	nlri, _ = ptypes.MarshalAny(&api.IPAddressPrefix{
+		Prefix:    "10.1.2.0",
+		PrefixLen: 24,
+	})
+
+	a1, _ = ptypes.MarshalAny(&api.OriginAttribute{
+		Origin: 0,
+	})
+	a2, _ = ptypes.MarshalAny(&api.NextHopAttribute{
+		NextHop: "192.168.16.2",
+	})
+	attrs = []*any.Any{a1, a2}
+
+	_, err = s.AddPath(context.Background(), &api.AddPathRequest{
+		Path: &api.Path{
+			Family: &api.Family{Afi: api.Family_AFI_IP, Safi: api.Family_SAFI_UNICAST},
+			Nlri:   nlri,
+			Pattrs: attrs,
+		},
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	nlri, _ = ptypes.MarshalAny(&api.IPAddressPrefix{
+		Prefix:    "10.1.3.0",
+		PrefixLen: 24,
+	})
+
+	a1, _ = ptypes.MarshalAny(&api.OriginAttribute{
+		Origin: 0,
+	})
+	a2, _ = ptypes.MarshalAny(&api.NextHopAttribute{
+		NextHop: "192.168.16.3",
+	})
+	attrs = []*any.Any{a1, a2}
+
+	_, err = s.AddPath(context.Background(), &api.AddPathRequest{
+		Path: &api.Path{
+			Family: &api.Family{Afi: api.Family_AFI_IP, Safi: api.Family_SAFI_UNICAST},
+			Nlri:   nlri,
+			Pattrs: attrs,
+		},
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	//Infinite Loop so that program does not time out
+	for {
+		fmt.Println("Infinite Loop 1")
+		time.Sleep(time.Second)
+	}
 	// do something useful here instead of exiting
-	time.Sleep(time.Minute * 3)
+	//time.Sleep(time.Minute * 3)
 }
