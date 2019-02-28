@@ -2,6 +2,9 @@ package main
 
 import (
 	"github.com/ligato/cn-infra/agent"
+	"github.com/ligato/cn-infra/logging"
+	"github.com/ligato/cn-infra/logging/logmanager"
+	"github.com/ligato/cn-infra/rpc/rest"
 )
 
 
@@ -24,8 +27,8 @@ func main() {
 // BgpAgent manages vswitch in contiv/vpp solution
 type BgpAgent struct {
 	LogManager   *logmanager.Plugin
-	Orchestrator *orchestrator.Plugin
-	KVScheduler  *kvscheduler.Scheduler
+	//Orchestrator *orchestrator.Plugin
+	//KVScheduler  *kvscheduler.Scheduler
 	Rest         *rest.Plugin
 }
 
