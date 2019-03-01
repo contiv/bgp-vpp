@@ -174,7 +174,7 @@ func (m *GlobalConf) GetUseMultiplePaths() bool {
 	return false
 }
 
-// neighbor configuration
+// neighbor configuration, one struct will be created per peer
 type PeerConf struct {
 	Name                 string                   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	AuthPassword         string                   `protobuf:"bytes,2,opt,name=auth_password,json=authPassword,proto3" json:"auth_password,omitempty"`
