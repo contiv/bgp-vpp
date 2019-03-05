@@ -1,10 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="2ede2e0e-4a7c-4fbb-823b-a83adb6f53d5" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/plugins/bgp/bgp-plugin.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/bgp/bgp-plugin.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/plugins/bgp/model/bgp.pb.go" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/bgp/model/bgp.pb.go" afterDir="false" />
-    </list>
+    <list default="true" id="2ede2e0e-4a7c-4fbb-823b-a83adb6f53d5" name="Default Changelist" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -44,7 +41,7 @@
     <session id="765328377">
       <usages-collector id="statistics.lifecycle.project">
         <counts>
-          <entry key="project.closed" value="1" />
+          <entry key="project.closed" value="2" />
           <entry key="project.open.time.0" value="1" />
           <entry key="project.open.time.4" value="1" />
           <entry key="project.open.time.6" value="1" />
@@ -117,8 +114,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/plugins/bgp/bgp-plugin.go">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="630">
-              <caret line="50" lean-forward="true" selection-start-line="50" selection-end-line="50" />
+            <state relative-caret-position="555">
+              <caret line="45" lean-forward="true" selection-start-line="45" selection-end-line="45" />
             </state>
           </provider>
         </entry>
@@ -230,6 +227,13 @@
               <item name="bgp" type="462c0819:PsiDirectoryNode" />
               <item name="descriptor" type="462c0819:PsiDirectoryNode" />
               <item name="adapter" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="bgp-vpp" type="b2602c69:ProjectViewProjectNode" />
+              <item name="bgp-vpp" type="462c0819:PsiDirectoryNode" />
+              <item name="plugins" type="462c0819:PsiDirectoryNode" />
+              <item name="bgp" type="462c0819:PsiDirectoryNode" />
+              <item name="model" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="bgp-vpp" type="b2602c69:ProjectViewProjectNode" />
@@ -394,8 +398,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/plugins/bgp/bgp-plugin.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="630">
-          <caret line="50" lean-forward="true" selection-start-line="50" selection-end-line="50" />
+        <state relative-caret-position="555">
+          <caret line="45" lean-forward="true" selection-start-line="45" selection-end-line="45" />
         </state>
       </provider>
     </entry>
