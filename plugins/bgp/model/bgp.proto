@@ -14,12 +14,13 @@ message BgpConf {
 
 // global configuration
 message GlobalConf {
-    uint32 as = 1;
-    string router_id = 2;
-    int32 listen_port = 3;
-    repeated string listen_addresses = 4;
-    repeated uint32 families = 5;
-    bool use_multiple_paths = 6;
+    string name = 1; //may not be needed, use for the handler
+    uint32 as = 2;
+    string router_id = 3;
+    int32 listen_port = 4;
+    repeated string listen_addresses = 5;
+    repeated uint32 families = 6;
+    bool use_multiple_paths = 7;
     //RouteSelectionOptionsConfig route_selection_options = 7;
     //DefaultRouteDistance default_route_distance = 8;
     //Confederation confederation = 9;
