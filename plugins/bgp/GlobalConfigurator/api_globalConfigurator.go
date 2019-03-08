@@ -14,10 +14,10 @@ type GlobalConfAPI interface {
 
 // GlobalConfWrite provides write methods for ETCD
 type GlobalConfWrite interface {
-	// CreatePlugin adds new plugin to etcd
-	CreatePlugin(val *model.GlobalConf) error
-	// DeletePlugin deletes plugin from etcd
-	DeletePlugin(key string) error
+	// CreateGlobalConf adds new plugin to etcd
+	CreateGlobalConf(val *model.GlobalConf) error
+	// DeleteGlobalConf deletes plugin from etcd
+	DeleteGlobalConf(key string) error
 }
 
 // GlobalConfHandler is accessor to etcd related GlobalConf methods

@@ -50,7 +50,7 @@ func (d *GlobalDescriptor) GetDescriptor() *adapter.GlobalConfDescriptor {
 
 // Create creates new value.
 func (d *GlobalDescriptor) Create(key string, value *model.GlobalConf) (metadata interface{}, err error) {
-	err = d.handlers.CreatePlugin(value)
+	err = d.handlers.CreateGlobalConf(value)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +60,7 @@ func (d *GlobalDescriptor) Create(key string, value *model.GlobalConf) (metadata
 
 // Delete removes an existing value.
 func (d *GlobalDescriptor) Delete(key string, value *model.GlobalConf, metadata interface{}) error {
-	err := d.handlers.DeletePlugin(value.GetName())
+	err := d.handlers.DeleteGlobalConf(value.GetName())
 	if err != nil {
 		return err
 	}

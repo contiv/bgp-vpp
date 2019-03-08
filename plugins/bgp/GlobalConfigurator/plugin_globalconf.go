@@ -4,24 +4,24 @@ import (
 	"github.com/contiv/bgp-vpp/plugins/bgp/model"
 )
 
-// CreatePlugin creates a new plugin in etcd
-func (b *GlobalConfHandler) CreatePlugin(val *model.GlobalConf) error {
+// CreateGlobalConf creates a new plugin in etcd
+func (b *GlobalConfHandler) CreateGlobalConf(val *model.GlobalConf) error {
 	err := b.broker.Put(val.GetName(), val)
 	if err != nil {
-		b.log.Errorf("Could not create plugin")
+		b.log.Errorf("Could not create configuration")
 		return err
 	}
 
 	return nil
 }
 
-// DeletePlugin deletes a plugin in etcd
-func (b *GlobalConfHandler) DeletePlugin(key string) error {
+// DeleteGlobalConf deletes a plugin in etcd
+func (b *GlobalConfHandler) DeleteGlobalConf(key string) error {
 	existed, err := b.broker.Delete(key)
 	if err != nil {
-		b.log.Errorf("Could not delete plugin")
+		b.log.Errorf("Could not delete configuration")
 	}
-	b.log.Infof("Plugin existed: %v", existed)
+	b.log.Infof("Configuration existed: %v", existed)
 
 	return nil
 }
