@@ -1,12 +1,15 @@
 package descriptor
 
 import (
-	"github.com/contiv/bgp-vpp/plugins/bgp/GlobalConfigurator"
+	"context"
+	//"github.com/contiv/bgp-vpp/plugins/bgp/GlobalConfigurator"
 	"github.com/contiv/bgp-vpp/plugins/bgp/descriptor/adapter"
 	"github.com/contiv/bgp-vpp/plugins/bgp/model"
 	"github.com/ligato/cn-infra/db/keyval"
 	"github.com/ligato/cn-infra/logging"
 	kvs "github.com/ligato/vpp-agent/plugins/kvscheduler/api"
+	bgp_api "github.com/osrg/gobgp/api"
+	gobgp "github.com/osrg/gobgp/pkg/server"
 )
 
 const (
@@ -18,16 +21,18 @@ type GlobalDescriptor struct {
 	log    logging.Logger
 	broker keyval.ProtoBroker
 	//scheduler kvs.KVScheduler
-	handlers GlobalConfigurator.GlobalConfAPI
+	//handlers GlobalConfigurator.GlobalConfAPI
+	server *gobgp.BgpServer
 }
 
 // NewGlobalConfDescriptor creates a new instance of the descriptor.
-func NewGlobalConfDescriptor(broker keyval.ProtoBroker, log logging.PluginLogger, handlers GlobalConfigurator.GlobalConfAPI) *GlobalDescriptor {
+func NewGlobalConfDescriptor(broker keyval.ProtoBroker, log logging.PluginLogger, server *gobgp.BgpServer) *GlobalDescriptor {
 	// Set plugin descriptor init values
 	return &GlobalDescriptor{
-		log:      log.NewLogger("global-conf-descriptor"),
-		broker:   broker,
-		handlers: handlers,
+		log:    log.NewLogger("global-conf-descriptor"),
+		broker: broker,
+		//handlers: handlers,
+		server: server,
 	}
 }
 
@@ -50,7 +55,14 @@ func (d *GlobalDescriptor) GetDescriptor() *adapter.GlobalConfDescriptor {
 
 // Create creates new value.
 func (d *GlobalDescriptor) Create(key string, value *model.GlobalConf) (metadata interface{}, err error) {
-	err = d.handlers.CreateGlobalConf(value)
+	//err = d.handlers.CreateGlobalConf(value)
+	err = d.server.StartBgp(context.Background(), &bgp_api.StartBgpRequest{
+		Global: &bgp_api.Global{
+			As:         value.As,
+			RouterId:   value.RouterId,
+			ListenPort: value.ListenPort,
+		},
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -60,11 +72,11 @@ func (d *GlobalDescriptor) Create(key string, value *model.GlobalConf) (metadata
 
 // Delete removes an existing value.
 func (d *GlobalDescriptor) Delete(key string, value *model.GlobalConf, metadata interface{}) error {
-	err := d.handlers.DeleteGlobalConf(value.GetName())
+	//err := d.handlers.DeleteGlobalConf(value.GetName())
+	err := d.server.StopBgp(context.Background(), &bgp_api.StopBgpRequest{})
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
