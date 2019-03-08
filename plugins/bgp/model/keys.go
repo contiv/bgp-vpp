@@ -9,12 +9,12 @@ var (
 		Module:  ModuleName,
 		Version: "v1",
 		Type:    "global",
-	}, models.WithNameTemplate("{{.Name}}"))
+	})
 	ModelBgpPeer = models.Register(&PeerConf{}, models.Spec{
 		Module:  ModuleName,
 		Version: "v1",
 		Type:    "peers",
-	})
+	}, models.WithNameTemplate("{{.Name}}"))
 )
 
 //given the peer name, this function will return the key
