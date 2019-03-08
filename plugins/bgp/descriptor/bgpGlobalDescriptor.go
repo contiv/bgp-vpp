@@ -5,7 +5,6 @@ import (
 	//"github.com/contiv/bgp-vpp/plugins/bgp/GlobalConfigurator"
 	"github.com/contiv/bgp-vpp/plugins/bgp/descriptor/adapter"
 	"github.com/contiv/bgp-vpp/plugins/bgp/model"
-	"github.com/ligato/cn-infra/db/keyval"
 	"github.com/ligato/cn-infra/logging"
 	kvs "github.com/ligato/vpp-agent/plugins/kvscheduler/api"
 	bgp_api "github.com/osrg/gobgp/api"
@@ -18,19 +17,17 @@ const (
 
 //our descriptor
 type GlobalDescriptor struct {
-	log    logging.Logger
-	broker keyval.ProtoBroker
+	log logging.Logger
 	//scheduler kvs.KVScheduler
 	//handlers GlobalConfigurator.GlobalConfAPI
 	server *gobgp.BgpServer
 }
 
 // NewGlobalConfDescriptor creates a new instance of the descriptor.
-func NewGlobalConfDescriptor(broker keyval.ProtoBroker, log logging.PluginLogger, server *gobgp.BgpServer) *GlobalDescriptor {
+func NewGlobalConfDescriptor(log logging.PluginLogger, server *gobgp.BgpServer) *GlobalDescriptor {
 	// Set plugin descriptor init values
 	return &GlobalDescriptor{
-		log:    log.NewLogger("global-conf-descriptor"),
-		broker: broker,
+		log: log.NewLogger("global-conf-descriptor"),
 		//handlers: handlers,
 		server: server,
 	}
