@@ -17,23 +17,16 @@ const (
 
 //our descriptor
 type GlobalDescriptor struct {
-	log logging.Logger
-	//scheduler kvs.KVScheduler
+	log    logging.Logger
 	server *gobgp.BgpServer
 }
 
 // NewGlobalConfDescriptor creates a new instance of the descriptor.
-func NewGlobalConfDescriptor(log logging.PluginLogger, server *gobgp.BgpServer) *GlobalDescriptor {
-	// Set plugin descriptor init values
-	return &GlobalDescriptor{
-		log:    log.NewLogger("global-conf-descriptor"),
-		server: server,
-	}
-}
+func NewGlobalConfDescriptor(log logging.PluginLogger, server *gobgp.BgpServer) *kvs.KVDescriptor {
+	d := &GlobalDescriptor{log: log, server: server}
 
-// GetDescriptor returns descriptor suitable for registration (via adapter) with the KVScheduler.
-func (d *GlobalDescriptor) GetDescriptor() *adapter.GlobalConfDescriptor {
-	return &adapter.GlobalConfDescriptor{
+	// Set plugin descriptor init values
+	gcd := &adapter.GlobalConfDescriptor{
 		Name:          globalDescriptorName,
 		NBKeyPrefix:   model.ModelBgpGlobal.KeyPrefix(),
 		ValueTypeName: model.ModelBgpGlobal.ProtoName(),
@@ -41,11 +34,12 @@ func (d *GlobalDescriptor) GetDescriptor() *adapter.GlobalConfDescriptor {
 		KeyLabel:      model.ModelBgpGlobal.StripKeyPrefix,
 		Create:        d.Create,
 		Delete:        d.Delete,
-		//UpdateWithRecreate: d.UpdateWithRecreate,
-		//Retrieve:             d.Retrieve,
-		Dependencies:         d.Dependencies,
-		RetrieveDependencies: []string{},
+		UpdateWithRecreate: func(key string, oldValue, newValue *model.GlobalConf, metadata interface{}) bool {
+			// Modify always performed via re-creation
+			return true
+		},
 	}
+	return adapter.NewGlobalConfDescriptor(gcd)
 }
 
 // Create creates new value.
@@ -71,19 +65,4 @@ func (d *GlobalDescriptor) Delete(key string, value *model.GlobalConf, metadata 
 		return err
 	}
 	return nil
-}
-
-// UpdateWithRecreate returns true if value update requires full re-creation.
-/*func (d *GlobalDescriptor) UpdateWithRecreate(key string, old, new *model.GlobalConf, metadata interface{}) bool {
-	return true
-}*/
-
-// Retrieve retrieves values from SB.
-/*func (d *GlobalDescriptor) Retrieve(correlate []adapter.PluginKVWithMetadata) (retrieved []adapter.PluginKVWithMetadata, err error) {
-	return retrieved, nil
-}*/
-
-// Dependencies lists dependencies of the given value.
-func (d *GlobalDescriptor) Dependencies(key string, value *model.GlobalConf) (deps []kvs.Dependency) {
-	return deps
 }
