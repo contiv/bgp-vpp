@@ -24,8 +24,8 @@ func PeerKey(name string) string {
 	})
 }
 
-func GlobalKey(name string) string {
+/*func GlobalKey(name string) string {
 	return models.Key(&GlobalConf{
 		Name: name,
 	})
-}
+}*/
