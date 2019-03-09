@@ -8,8 +8,10 @@ package bgp
 import (
 	"log"
 
+	"github.com/contiv/bgp-vpp/plugins/bgp/descriptor"
 	"github.com/ligato/cn-infra/datasync/kvdbsync"
 	"github.com/ligato/cn-infra/infra"
+	"github.com/ligato/cn-infra/logging"
 	"github.com/ligato/cn-infra/rpc/rest"
 	"github.com/ligato/vpp-agent/plugins/kvscheduler"
 	"github.com/ligato/vpp-agent/plugins/orchestrator"
@@ -30,6 +32,7 @@ type Deps struct {
 	Scheduler    *kvscheduler.Scheduler
 	ETCDDataSync *kvdbsync.Plugin
 	BGPServer    *gobgp.BgpServer
+	log          logging.PluginLogger
 	//interface needed to write to ETCD - initialized in Init()
 	//Watcher   datasync.KeyValProtoWatcher
 	//Publisher datasync.KeyProtoValWriter
@@ -43,6 +46,11 @@ func (p *BgpPlugin) Init() error {
 	if p.Deps.BGPServer == nil {
 		p.Deps.BGPServer = gobgp.NewBgpServer()
 	}
+	/*if p.Deps.Logger == nil{
+		p.Deps.Logger = logger.NewLogger("global-conf-descriptor")
+	}*/
+	globalDescriptor := descriptor.NewGlobalConfDescriptor(p.Deps.log, p.Deps.BGPServer)
+	p.Deps.Scheduler.RegisterKVDescriptor(globalDescriptor)
 	log.Println("Hello World!")
 	return nil
 }
