@@ -13,6 +13,7 @@ import (
 	"github.com/ligato/cn-infra/rpc/rest"
 	"github.com/ligato/vpp-agent/plugins/kvscheduler"
 	"github.com/ligato/vpp-agent/plugins/orchestrator"
+	gobgp "github.com/osrg/gobgp/pkg/server"
 )
 
 type BgpPlugin struct {
@@ -28,7 +29,7 @@ type Deps struct {
 	Orchestrator *orchestrator.Plugin
 	Scheduler    *kvscheduler.Scheduler
 	ETCDDataSync *kvdbsync.Plugin
-
+	BGPServer    *gobgp.BgpServer
 	//interface needed to write to ETCD - initialized in Init()
 	//Watcher   datasync.KeyValProtoWatcher
 	//Publisher datasync.KeyProtoValWriter
@@ -39,7 +40,9 @@ func (p *BgpPlugin) String() string {
 }
 
 func (p *BgpPlugin) Init() error {
-
+	if p.Deps.BGPServer == nil {
+		p.Deps.BGPServer = gobgp.NewBgpServer()
+	}
 	log.Println("Hello World!")
 	return nil
 }
