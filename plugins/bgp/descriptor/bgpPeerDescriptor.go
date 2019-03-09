@@ -17,22 +17,16 @@ const (
 
 //our descriptor
 type PeerDescriptor struct {
-	log logging.Logger
-	//scheduler kvs.KVScheduler
+	log    logging.Logger
 	server *gobgp.BgpServer
 }
 
-// NewPeerConfDescriptor creates a new instance of the descriptor.
-func NewPeerConfDescriptor(log logging.PluginLogger) *PeerDescriptor {
-	// Set plugin descriptor init values
-	return &PeerDescriptor{
-		log: log.NewLogger("peer-conf-descriptor"),
-	}
-}
+// NewGlobalConfDescriptor creates a new instance of the descriptor.
+func NewPeerConfDescriptor(log logging.PluginLogger, server *gobgp.BgpServer) *kvs.KVDescriptor {
+	d := &PeerDescriptor{log: log, server: server}
 
-// GetDescriptor returns descriptor suitable for registration (via adapter) with the KVScheduler.
-func (d *PeerDescriptor) GetDescriptor() *adapter.PeerConfDescriptor {
-	return &adapter.PeerConfDescriptor{
+	// Set plugin descriptor init values
+	gcd := &adapter.PeerConfDescriptor{
 		Name:          peerDescriptorName,
 		NBKeyPrefix:   model.ModelBgpPeer.KeyPrefix(),
 		ValueTypeName: model.ModelBgpPeer.ProtoName(),
@@ -40,11 +34,12 @@ func (d *PeerDescriptor) GetDescriptor() *adapter.PeerConfDescriptor {
 		KeyLabel:      model.ModelBgpPeer.StripKeyPrefix,
 		Create:        d.Create,
 		Delete:        d.Delete,
-		//UpdateWithRecreate: d.UpdateWithRecreate,
-		//Retrieve:             d.Retrieve,
-		Dependencies:         d.Dependencies,
-		RetrieveDependencies: []string{},
+		UpdateWithRecreate: func(key string, oldValue, newValue *model.PeerConf, metadata interface{}) bool {
+			// Modify always performed via re-creation
+			return true
+		},
 	}
+	return adapter.NewPeerConfDescriptor(gcd)
 }
 
 // Create creates new value.
