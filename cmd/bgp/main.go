@@ -6,7 +6,6 @@ import (
 	"github.com/ligato/cn-infra/logging"
 )
 
-
 func main() {
 	// Create an instance of our plugin using its constructor.
 	p := bgp.NewPlugin()
@@ -20,5 +19,3 @@ func main() {
 		logging.DefaultLogger.Error(err)
 	}
 }
-
-
