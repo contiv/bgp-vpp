@@ -29,7 +29,7 @@ message GlobalConf {
 
 // neighbor configuration, one struct will be created per peer
 message PeerConf {
-    string c = 1;
+    string name = 1;
     string auth_password = 2;
     string description = 3;
     uint32 local_as = 4;

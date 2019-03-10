@@ -7,7 +7,7 @@ import (
 	"github.com/contiv/bgp-vpp/plugins/bgp/model"
 	"github.com/ligato/cn-infra/logging"
 	kvs "github.com/ligato/vpp-agent/plugins/kvscheduler/api"
-	bgp_api "github.com/osrg/gobgp/api"
+	bgpapi "github.com/osrg/gobgp/api"
 	gobgp "github.com/osrg/gobgp/pkg/server"
 )
 
@@ -44,8 +44,8 @@ func NewGlobalConfDescriptor(log logging.PluginLogger, server *gobgp.BgpServer) 
 
 // Create creates new value.
 func (d *GlobalDescriptor) Create(key string, value *model.GlobalConf) (metadata interface{}, err error) {
-	err = d.server.StartBgp(context.Background(), &bgp_api.StartBgpRequest{
-		Global: &bgp_api.Global{
+	err = d.server.StartBgp(context.Background(), &bgpapi.StartBgpRequest{
+		Global: &bgpapi.Global{
 			As:         value.As,
 			RouterId:   value.RouterId,
 			ListenPort: value.ListenPort,
@@ -60,7 +60,7 @@ func (d *GlobalDescriptor) Create(key string, value *model.GlobalConf) (metadata
 
 // Delete removes an existing value.
 func (d *GlobalDescriptor) Delete(key string, value *model.GlobalConf, metadata interface{}) error {
-	err := d.server.StopBgp(context.Background(), &bgp_api.StopBgpRequest{})
+	err := d.server.StopBgp(context.Background(), &bgpapi.StopBgpRequest{})
 	if err != nil {
 		return err
 	}
