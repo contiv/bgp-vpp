@@ -22,7 +22,7 @@ func NewPlugin(opts ...Option) *BgpPlugin {
 	p.Rest = &rest.DefaultPlugin
 
 	p.Orchestrator = &orchestrator.DefaultPlugin
-	p.Scheduler = &kvscheduler.DefaultPlugin
+	p.KVScheduler = &kvscheduler.DefaultPlugin
 	p.ETCDDataSync = kvdbsync.NewPlugin(kvdbsync.UseKV(&etcd.DefaultPlugin))
 	//initializing interfaces that allow us to write to ETCD and watch for changes
 	writers := datasync.KVProtoWriters{
