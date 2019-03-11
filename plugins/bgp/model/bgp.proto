@@ -2,6 +2,10 @@ syntax = "proto3";
 
 package model;
 
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+option (gogoproto.messagename_all) = true;
+
+
 //configuration comes from: https://github.com/osrg/gobgp/blob/master/api/gobgp.proto
 
 
