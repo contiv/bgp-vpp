@@ -7,7 +7,7 @@ import (
 	"github.com/contiv/bgp-vpp/plugins/bgp/model"
 	"github.com/ligato/cn-infra/logging"
 	kvs "github.com/ligato/vpp-agent/plugins/kvscheduler/api"
-	bgp_api "github.com/osrg/gobgp/api"
+	bgpapi "github.com/osrg/gobgp/api"
 	gobgp "github.com/osrg/gobgp/pkg/server"
 )
 
@@ -44,13 +44,13 @@ func NewPeerConfDescriptor(log logging.PluginLogger, server *gobgp.BgpServer) *k
 
 // Create creates new value.
 func (d *PeerDescriptor) Create(key string, value *model.PeerConf) (metadata interface{}, err error) {
-	n := &bgp_api.Peer{
-		Conf: &bgp_api.PeerConf{
+	n := &bgpapi.Peer{
+		Conf: &bgpapi.PeerConf{
 			NeighborAddress: value.NeighborAddress,
 			PeerAs:          value.PeerAs,
 		},
 	}
-	err = d.server.AddPeer(context.Background(), &bgp_api.AddPeerRequest{
+	err = d.server.AddPeer(context.Background(), &bgpapi.AddPeerRequest{
 		Peer: n,
 	})
 	if err != nil {
@@ -62,7 +62,7 @@ func (d *PeerDescriptor) Create(key string, value *model.PeerConf) (metadata int
 
 // Delete removes an existing value.
 func (d *PeerDescriptor) Delete(key string, value *model.PeerConf, metadata interface{}) error {
-	err := d.server.DeletePeer(context.Background(), &bgp_api.DeletePeerRequest{})
+	err := d.server.DeletePeer(context.Background(), &bgpapi.DeletePeerRequest{})
 	if err != nil {
 		return err
 	}

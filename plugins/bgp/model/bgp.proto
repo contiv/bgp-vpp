@@ -1,7 +1,47 @@
 
+<<<<<<< HEAD
+package model;
+
+//configuration comes from: https://github.com/osrg/gobgp/blob/master/api/gobgp.proto
+
+
+//BGP configuration
+message BgpConf {
+    GlobalConf global = 1;
+    repeated PeerConf peers = 2;
+}
+
+
+// global configuration
+message GlobalConf {
+    uint32 as = 1;
+    string router_id = 2;
+    int32 listen_port = 3;
+    repeated string listen_addresses = 4;
+    repeated uint32 families = 5;
+    bool use_multiple_paths = 6;
+    //RouteSelectionOptionsConfig route_selection_options = 7;
+    //DefaultRouteDistance default_route_distance = 8;
+    //Confederation confederation = 9;
+    //GracefulRestart graceful_restart = 10;
+    //ApplyPolicy apply_policy = 11;
+}
+
+// neighbor configuration, one struct will be created per peer
+message PeerConf {
+    string name = 1;
+    string auth_password = 2;
+    string description = 3;
+    uint32 local_as = 4;
+    string neighbor_address = 5;
+    uint32 peer_as = 6;
+    string peer_group = 7;
+    uint32 peer_type = 8;
+=======
     uint32 peer_as = 7;
     string peer_group = 8;
     uint32 peer_type = 9;
+>>>>>>> 8925f7c9304b451daa300660f5059bda689b24e6
     enum RemovePrivateAs {
         NONE = 0;
         ALL = 1;

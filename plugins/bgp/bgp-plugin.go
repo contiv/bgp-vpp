@@ -4,8 +4,9 @@ package bgp
 //go:generate descriptor-adapter --descriptor-name GlobalConf --value-type *model.GlobalConf --import "model" --output-dir "descriptor"
 //go:generate descriptor-adapter --descriptor-name PeerConf --value-type *model.PeerConf --import "model" --output-dir "descriptor"
 import (
-	"github.com/contiv/bgp-vpp/plugins/bgp/descriptor"
 	"log"
+
+	"github.com/contiv/bgp-vpp/plugins/bgp/descriptor"
 
 	"github.com/ligato/cn-infra/datasync/kvdbsync"
 	"github.com/ligato/cn-infra/infra"
@@ -47,9 +48,8 @@ func (p *BgpPlugin) Init() error {
 	p.Deps.KVScheduler.RegisterKVDescriptor(gd)
 
 	// register descriptor for bgp peer config
-	/*pd := descriptor.NewPeerConfDescriptor(p.Log, p.BGPServer)
-	p.KVScheduler.RegisterKVDescriptor(pd)*/
-
+	pd := descriptor.NewPeerConfDescriptor(p.Log, p.BGPServer)
+	p.KVScheduler.RegisterKVDescriptor(pd)
 
 	log.Println("Hello World!")
 	return nil
