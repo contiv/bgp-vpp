@@ -44,6 +44,8 @@ func NewGlobalConfDescriptor(log logging.PluginLogger, server *gobgp.BgpServer) 
 
 // Create creates new value.
 func (d *GlobalDescriptor) Create(key string, value *model.GlobalConf) (metadata interface{}, err error) {
+	logging.Infof("Creating GlobalConf As = %s, RouterId = %s, ListenPort = %s",
+		value.As, value.RouterId, value.ListenPort)
 	err = d.server.StartBgp(context.Background(), &bgpapi.StartBgpRequest{
 		Global: &bgpapi.Global{
 			As:         value.As,
@@ -52,6 +54,7 @@ func (d *GlobalDescriptor) Create(key string, value *model.GlobalConf) (metadata
 		},
 	})
 	if err != nil {
+		logging.Errorf("Error creating GlobalConf = %s", err)
 		return nil, err
 	}
 
