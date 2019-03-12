@@ -7,12 +7,9 @@ import (
 	"log"
 
 	"github.com/contiv/bgp-vpp/plugins/bgp/descriptor"
-
-	"github.com/ligato/cn-infra/datasync/kvdbsync"
 	"github.com/ligato/cn-infra/infra"
 	"github.com/ligato/cn-infra/rpc/rest"
 	kvs "github.com/ligato/vpp-agent/plugins/kvscheduler/api"
-	"github.com/ligato/vpp-agent/plugins/orchestrator"
 	gobgp "github.com/osrg/gobgp/pkg/server"
 )
 
@@ -24,15 +21,9 @@ type BgpPlugin struct {
 type Deps struct {
 	//plugins - initialized in options.go NewPlugin()
 	infra.PluginDeps
-	Rest         *rest.Plugin
-	Orchestrator *orchestrator.Plugin
-	//Scheduler    *kvscheduler.Scheduler
-	ETCDDataSync *kvdbsync.Plugin
-	BGPServer    *gobgp.BgpServer
-	KVScheduler  kvs.KVScheduler
-	//interface needed to write to ETCD - initialized in Init()
-	//Watcher   datasync.KeyValProtoWatcher
-	//Publisher datasync.KeyProtoValWriter
+	Rest        *rest.Plugin
+	BGPServer   *gobgp.BgpServer
+	KVScheduler kvs.KVScheduler
 }
 
 func (p *BgpPlugin) String() string {
@@ -45,11 +36,7 @@ func (p *BgpPlugin) Init() error {
 
 	// register descriptor for bgp global config
 	gd := descriptor.NewGlobalConfDescriptor(p.Log, p.BGPServer)
-	p.Deps.KVScheduler.RegisterKVDescriptor(gd)
-
-	// register descriptor for bgp peer config
-	pd := descriptor.NewPeerConfDescriptor(p.Log, p.BGPServer)
-	p.KVScheduler.RegisterKVDescriptor(pd)
+	p.KVScheduler.RegisterKVDescriptor(gd)
 
 	log.Println("Hello World!")
 	return nil
