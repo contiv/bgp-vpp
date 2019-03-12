@@ -38,6 +38,10 @@ func (p *BgpPlugin) Init() error {
 	gd := descriptor.NewGlobalConfDescriptor(p.Log, p.BGPServer)
 	p.KVScheduler.RegisterKVDescriptor(gd)
 
+	// register descriptor for bgp peer config
+	pd := descriptor.NewPeerConfDescriptor(p.Log, p.BGPServer)
+	p.KVScheduler.RegisterKVDescriptor(pd)
+
 	log.Println("Hello World!")
 	return nil
 }
