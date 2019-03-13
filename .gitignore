@@ -1,2 +1,4 @@
 #Don't track content of thse folders
 .idea/
+cmd/bgp/main
+cmd/bgp/bgp

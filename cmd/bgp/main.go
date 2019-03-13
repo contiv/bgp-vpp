@@ -10,7 +10,6 @@ import (
 	"github.com/ligato/cn-infra/health/statuscheck"
 	"github.com/ligato/cn-infra/logging"
 	"github.com/ligato/cn-infra/logging/logmanager"
-	"github.com/ligato/vpp-agent/plugins/kvscheduler"
 	"github.com/ligato/vpp-agent/plugins/orchestrator"
 )
 
@@ -19,7 +18,6 @@ type BgpAgent struct {
 	BgpAgent   *bgp.BgpPlugin
 
 	Orchestrator *orchestrator.Plugin
-	Scheduler    *kvscheduler.Scheduler
 	ETCDDataSync *kvdbsync.Plugin
 }
 
@@ -42,7 +40,6 @@ func New() *BgpAgent {
 	return &BgpAgent{
 		LogManager:   &logmanager.DefaultPlugin,
 		Orchestrator: &orchestrator.DefaultPlugin,
-		Scheduler:    &kvscheduler.DefaultPlugin,
 		ETCDDataSync: etcdDataSync,
 		BgpAgent:     &bgp.DefaultPlugin,
 	}
