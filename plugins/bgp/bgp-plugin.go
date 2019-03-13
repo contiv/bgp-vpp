@@ -30,9 +30,9 @@ func (p *BgpPlugin) String() string {
 	return "Starting BgpPlugin Application"
 }
 func (p *BgpPlugin) Init() error {
-	if p.Deps.BGPServer == nil {
-		p.Deps.BGPServer = gobgp.NewBgpServer()
-		go p.Deps.BGPServer.Serve()
+	if p.BGPServer == nil {
+		p.BGPServer = gobgp.NewBgpServer()
+		go p.BGPServer.Serve()
 	}
 
 	// register descriptor for bgp global config
