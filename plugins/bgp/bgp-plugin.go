@@ -27,11 +27,12 @@ type Deps struct {
 }
 
 func (p *BgpPlugin) String() string {
-	return "HelloWorld"
+	return "Starting BgpPlugin Application"
 }
 func (p *BgpPlugin) Init() error {
 	if p.Deps.BGPServer == nil {
 		p.Deps.BGPServer = gobgp.NewBgpServer()
+		go p.Deps.BGPServer.Serve()
 	}
 
 	// register descriptor for bgp global config
@@ -42,10 +43,9 @@ func (p *BgpPlugin) Init() error {
 	pd := descriptor.NewPeerConfDescriptor(p.Log, p.BGPServer)
 	p.KVScheduler.RegisterKVDescriptor(pd)
 
-	log.Println("Hello World!")
 	return nil
 }
 func (p *BgpPlugin) Close() error {
-	log.Println("Goodbye World!")
+	log.Println("Closing BgpPlugin Application.")
 	return nil
 }
