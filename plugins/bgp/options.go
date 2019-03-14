@@ -15,6 +15,7 @@ func NewPlugin(opts ...Option) *BgpPlugin {
 	p.PluginName = "bgp-plugin"
 	p.Rest = &rest.DefaultPlugin
 	p.KVScheduler = &kvscheduler.DefaultPlugin
+	p.Setup()
 
 	for _, o := range opts {
 		o(p)

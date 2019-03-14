@@ -44,8 +44,8 @@ func NewPeerConfDescriptor(log logging.PluginLogger, server *gobgp.BgpServer) *k
 
 // Create creates new value.
 func (d *PeerDescriptor) Create(key string, value *model.PeerConf) (metadata interface{}, err error) {
-	logging.Infof("Creating PeerConf neighbor_address = %s, peer_as = %d",
-		value.NeighborAddress, value.PeerAs)
+	d.log.Infof("Creating Peer %s,  neighbor_address = %s, peer_as = %d",
+		value.Name, value.NeighborAddress, value.PeerAs)
 	n := &bgpapi.Peer{
 		Conf: &bgpapi.PeerConf{
 			NeighborAddress: value.NeighborAddress,
@@ -56,7 +56,7 @@ func (d *PeerDescriptor) Create(key string, value *model.PeerConf) (metadata int
 		Peer: n,
 	})
 	if err != nil {
-		logging.Errorf("Error creating PeerConf = %s", err)
+		d.log.Errorf("Error creating PeerConf = %s", err)
 		return nil, err
 	}
 
@@ -65,6 +65,7 @@ func (d *PeerDescriptor) Create(key string, value *model.PeerConf) (metadata int
 
 // Delete removes an existing value.
 func (d *PeerDescriptor) Delete(key string, value *model.PeerConf, metadata interface{}) error {
+	d.log.Infof("Deleting Peer %s", value.Name)
 	err := d.server.DeletePeer(context.Background(), &bgpapi.DeletePeerRequest{})
 	if err != nil {
 		return err

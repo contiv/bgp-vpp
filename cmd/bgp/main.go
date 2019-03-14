@@ -6,6 +6,7 @@ import (
 	"github.com/ligato/cn-infra/datasync"
 	"github.com/ligato/cn-infra/datasync/kvdbsync"
 	"github.com/ligato/cn-infra/datasync/kvdbsync/local"
+	"github.com/ligato/cn-infra/datasync/resync"
 	"github.com/ligato/cn-infra/db/keyval/etcd"
 	"github.com/ligato/cn-infra/health/statuscheck"
 	"github.com/ligato/cn-infra/logging"
@@ -67,6 +68,7 @@ func (ss *BgpAgent) Init() error {
 
 // AfterInit executes resync.
 func (ss *BgpAgent) AfterInit() error {
+	resync.DefaultPlugin.DoResync()
 	return nil
 }
 
