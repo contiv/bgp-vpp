@@ -228,8 +228,8 @@
   revision = "900a7284ac2c39c30e278571a2cafeb7bc82b051"
 
 [[projects]]
-  branch = "master"
-  digest = "1:171340cce5fa7e37dfe4e53eed8bcd70848801f198c8ed350784fb698aec3c4f"
+  branch = "dev"
+  digest = "1:f6c1d52f6d0e8b5cafb2b0aea6b7f6a4d0fbaf48869c56a7ec4494b47afee8fb"
   name = "github.com/ligato/vpp-agent"
   packages = [
     "api/genericmanager",
@@ -242,7 +242,7 @@
     "plugins/orchestrator",
   ]
   pruneopts = ""
-  revision = "3de04aba21d620420d5667dfbac32c3de8c31235"
+  revision = "ce323d83abb29cdc1eaa582f95ff0981deec574b"
 
 [[projects]]
   digest = "1:961dc3b1d11f969370533390fdf203813162980c858e1dabe827b60940c909a5"
@@ -539,6 +539,7 @@
     "github.com/ligato/cn-infra/datasync",
     "github.com/ligato/cn-infra/datasync/kvdbsync",
     "github.com/ligato/cn-infra/datasync/kvdbsync/local",
+    "github.com/ligato/cn-infra/datasync/resync",
     "github.com/ligato/cn-infra/db/keyval/etcd",
     "github.com/ligato/cn-infra/health/statuscheck",
     "github.com/ligato/cn-infra/infra",

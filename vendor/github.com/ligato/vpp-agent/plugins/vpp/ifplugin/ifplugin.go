@@ -23,13 +23,12 @@ import (
 	"sync"
 
 	govppapi "git.fd.io/govpp.git/api"
-	"github.com/pkg/errors"
-
 	"github.com/ligato/cn-infra/datasync"
 	"github.com/ligato/cn-infra/health/statuscheck"
 	"github.com/ligato/cn-infra/idxmap"
 	"github.com/ligato/cn-infra/infra"
 	"github.com/ligato/cn-infra/utils/safeclose"
+	"github.com/pkg/errors"
 
 	"github.com/ligato/vpp-agent/api/models/vpp"
 	interfaces "github.com/ligato/vpp-agent/api/models/vpp/interfaces"
@@ -37,11 +36,13 @@ import (
 	kvs "github.com/ligato/vpp-agent/plugins/kvscheduler/api"
 	linux_ifcalls "github.com/ligato/vpp-agent/plugins/linux/ifplugin/linuxcalls"
 	"github.com/ligato/vpp-agent/plugins/linux/nsplugin"
-	"github.com/ligato/vpp-agent/plugins/vpp/binapi/dhcp"
 	"github.com/ligato/vpp-agent/plugins/vpp/ifplugin/descriptor"
 	"github.com/ligato/vpp-agent/plugins/vpp/ifplugin/descriptor/adapter"
 	"github.com/ligato/vpp-agent/plugins/vpp/ifplugin/ifaceidx"
 	"github.com/ligato/vpp-agent/plugins/vpp/ifplugin/vppcalls"
+
+	_ "github.com/ligato/vpp-agent/plugins/vpp/ifplugin/vppcalls/vpp1810"
+	_ "github.com/ligato/vpp-agent/plugins/vpp/ifplugin/vppcalls/vpp1901"
 )
 
 const (
@@ -68,14 +69,13 @@ type IfPlugin struct {
 	vppCh govppapi.Channel
 
 	// handlers
-	ifHandler      vppcalls.IfVppAPI
+	ifHandler      vppcalls.InterfaceVppAPI
 	linuxIfHandler linux_ifcalls.NetlinkAPIRead
 
 	// descriptors
 	ifDescriptor   *descriptor.InterfaceDescriptor
 	unIfDescriptor *descriptor.UnnumberedIfDescriptor
 	dhcpDescriptor *descriptor.DHCPDescriptor
-	dhcpChan       chan govppapi.Message
 
 	// index maps
 	intfIndex ifaceidx.IfaceMetadataIndex
@@ -137,7 +137,8 @@ func (p *IfPlugin) Init() error {
 	p.fromConfigFile()
 
 	// Fills nil dependencies with default values
-	p.publishStats = p.PublishStatistics != nil || p.NotifyStates != nil
+	// FIXME: for performance reasons, disabled until refactored
+	//p.publishStats = p.PublishStatistics != nil || p.NotifyStates != nil
 	p.fixNilPointers()
 
 	// VPP channel
@@ -146,7 +147,7 @@ func (p *IfPlugin) Init() error {
 	}
 
 	// init handlers
-	p.ifHandler = vppcalls.NewIfVppHandler(p.vppCh, p.Log)
+	p.ifHandler = vppcalls.CompatibleInterfaceVppHandler(p.vppCh, p.Log)
 	if p.LinuxIfPlugin != nil {
 		p.linuxIfHandler = linux_ifcalls.NewNetLinkHandler()
 	}
@@ -192,11 +193,7 @@ func (p *IfPlugin) Init() error {
 	p.dhcpDescriptor.SetInterfaceIndex(p.intfIndex)
 
 	// start watching for DHCP notifications
-	p.dhcpChan = make(chan govppapi.Message, 1)
-	if _, err := p.vppCh.SubscribeNotification(p.dhcpChan, &dhcp.DHCPComplEvent{}); err != nil {
-		return err
-	}
-	p.dhcpDescriptor.WatchDHCPNotifications(p.ctx, p.dhcpChan)
+	p.dhcpDescriptor.WatchDHCPNotifications(p.ctx)
 
 	// interface state data
 	if p.publishStats {
@@ -224,7 +221,7 @@ func (p *IfPlugin) Init() error {
 				case p.ifStateChan <- state:
 					// OK
 				default:
-					p.Log.Debug("Unable to send to the ifStateChan channel - channel buffer full.")
+					p.Log.Warn("Unable to send to the ifStateChan channel - channel buffer full.")
 				}
 			}); err != nil {
 			return err
@@ -271,7 +268,7 @@ func (p *IfPlugin) Close() error {
 		// registrations
 		p.watchStatusReg,
 		// channels
-		p.dhcpChan, p.resyncStatusChan, p.ifStateChan)
+		p.resyncStatusChan, p.ifStateChan)
 }
 
 // GetInterfaceIndex gives read-only access to map with metadata of all configured

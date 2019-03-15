@@ -9,7 +9,7 @@ var (
 		Module:  ModuleName,
 		Version: "v1",
 		Type:    "global",
-	}, models.WithNameTemplate("{{.Name}}"))
+	})
 	ModelBgpPeer = models.Register(&PeerConf{}, models.Spec{
 		Module:  ModuleName,
 		Version: "v1",

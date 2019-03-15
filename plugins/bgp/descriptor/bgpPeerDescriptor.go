@@ -34,6 +34,7 @@ func NewPeerConfDescriptor(log logging.PluginLogger, server *gobgp.BgpServer) *k
 		KeyLabel:      model.ModelBgpPeer.StripKeyPrefix,
 		Create:        d.Create,
 		Delete:        d.Delete,
+		Dependencies:  d.Dependencies,
 		UpdateWithRecreate: func(key string, oldValue, newValue *model.PeerConf, metadata interface{}) bool {
 			// Modify always performed via re-creation
 			return true
@@ -84,6 +85,6 @@ func (d *PeerDescriptor) Delete(key string, value *model.PeerConf, metadata inte
 }*/
 
 // Dependencies lists dependencies of the given value.
-func (d *PeerDescriptor) Dependencies(key string, value *model.PeerConf) (deps []kvs.Dependency) {
-	return deps
+func (d *PeerDescriptor) Dependencies(key string, value *model.PeerConf) ([]kvs.Dependency) {
+	return []kvs.Dependency{{Label: "bgp-global", Key: model.ModelBgpGlobal.KeyPrefix()}}
 }

@@ -23,7 +23,6 @@ message GlobalConf {
     repeated string listen_addresses = 4;
     repeated uint32 families = 5;
     bool use_multiple_paths = 6;
-    string name = 7;
     //RouteSelectionOptionsConfig route_selection_options = 7;
     //DefaultRouteDistance default_route_distance = 8;
     //Confederation confederation = 9;
