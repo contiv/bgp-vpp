@@ -188,7 +188,7 @@ Get Interface Sw If Index
 
 Get Bridge Domain ID
     [Arguments]    ${node}    ${bd_name}
-    ${bds_dump}=    Execute On Machine    docker    curl -X GET http://localhost:9191/dump/vpp/v2/bd
+    ${bds_dump}=    Execute On Machine    docker    curl -sX GET http://localhost:9191/dump/vpp/v2/bd
     ${bds_json}=    Evaluate    json.loads('''${bds_dump}''')    json
     ${index}=   Set Variable    0
     :FOR    ${bd}   IN  @{bds_json}
@@ -199,7 +199,7 @@ Get Bridge Domain ID
 
 Get Bridge Domain ID IPv6
     [Arguments]    ${node}    ${bd_name}
-    ${bds_dump}=    Execute On Machine    docker    curl --noproxy "::" -g -6 -X GET http://[::]:9191/dump/vpp/v2/bd
+    ${bds_dump}=    Execute On Machine    docker    curl --noproxy "::" -g -6 -sX GET http://[::]:9191/dump/vpp/v2/bd
     ${bds_json}=    Evaluate    json.loads('''${bds_dump}''')    json
     ${index}=   Set Variable    0
     :FOR    ${bd}   IN  @{bds_json}
@@ -562,41 +562,81 @@ Delete STN Rule
     [Return]    ${out}
 
 Put Local SID With Base End function
-    [Arguments]    ${node}    ${localsidName}    ${sidAddress}    ${fibtable}
+    [Arguments]    ${node}    ${sidAddress}    ${fibtable}
     [Documentation]    Add json to etcd that configurates local SID with base end function.
     ${data}=               OperatingSystem.Get File      ${CURDIR}/../resources/srv6_local_sid_with_base_end_function.json
-    ${uri}=                Set Variable                  /vnf-agent/${node}/config/vpp/srv6/${AGENT_VER}/localsid/${localsidName}
+    ${uri}=                Set Variable                  /vnf-agent/${node}/config/vpp/srv6/${AGENT_VER}/localsid/${sidAddress}
+    ${data}=               Replace Variables             ${data}
+    Put Json     ${uri}    ${data}
+
+Put Local SID With End.X function
+    [Arguments]    ${node}    ${sidAddress}    ${fibtable}    ${outinterface}    ${nexthop}    ${psp}
+    [Documentation]    Add json to etcd that configurates local SID with X end function.
+    ${data}=               OperatingSystem.Get File      ${CURDIR}/../resources/srv6_local_sid_with_x_end_function.json
+    ${uri}=                Set Variable                  /vnf-agent/${node}/config/vpp/srv6/${AGENT_VER}/localsid/${sidAddress}
+    ${data}=               Replace Variables             ${data}
+    Put Json     ${uri}    ${data}
+
+Put Local SID With End.T function
+    [Arguments]    ${node}    ${sidAddress}    ${fibtable}    ${vrfid}    ${psp}
+    [Documentation]    Add json to etcd that configurates local SID with T end function.
+    ${data}=               OperatingSystem.Get File      ${CURDIR}/../resources/srv6_local_sid_with_t_end_function.json
+    ${uri}=                Set Variable                  /vnf-agent/${node}/config/vpp/srv6/${AGENT_VER}/localsid/${sidAddress}
+    ${data}=               Replace Variables             ${data}
+    Put Json     ${uri}    ${data}
+
+Put Local SID With End.DT4 function
+    [Arguments]    ${node}    ${sidAddress}    ${fibtable}    ${vrfid}
+    [Documentation]    Add json to etcd that configurates local SID with DT4 end function.
+    ${data}=               OperatingSystem.Get File      ${CURDIR}/../resources/srv6_local_sid_with_dt4_end_function.json
+    ${uri}=                Set Variable                  /vnf-agent/${node}/config/vpp/srv6/${AGENT_VER}/localsid/${sidAddress}
+    ${data}=               Replace Variables             ${data}
+    Put Json     ${uri}    ${data}
+
+Put Local SID With End.DT6 function
+    [Arguments]    ${node}    ${sidAddress}    ${fibtable}    ${vrfid}
+    [Documentation]    Add json to etcd that configurates local SID with DT6 end function.
+    ${data}=               OperatingSystem.Get File      ${CURDIR}/../resources/srv6_local_sid_with_dt6_end_function.json
+    ${uri}=                Set Variable                  /vnf-agent/${node}/config/vpp/srv6/${AGENT_VER}/localsid/${sidAddress}
+    ${data}=               Replace Variables             ${data}
+    Put Json     ${uri}    ${data}
+
+Put Local SID With End.DX2 function
+    [Arguments]    ${node}    ${sidAddress}    ${fibtable}    ${outinterface}    ${vlantag}=0
+    [Documentation]    Add json to etcd that configurates local SID with DX2 end function.
+    ${data}=               OperatingSystem.Get File      ${CURDIR}/../resources/srv6_local_sid_with_dx2_end_function.json
+    ${uri}=                Set Variable                  /vnf-agent/${node}/config/vpp/srv6/${AGENT_VER}/localsid/${sidAddress}
     ${data}=               Replace Variables             ${data}
     Put Json     ${uri}    ${data}
 
 Put Local SID With End.DX4 function
-    [Arguments]    ${node}    ${localsidName}    ${sidAddress}    ${fibtable}    ${outinterface}    ${nexthop}
+    [Arguments]    ${node}    ${sidAddress}    ${fibtable}    ${outinterface}    ${nexthop}
     [Documentation]    Add json to etcd that configurates local SID with DX4 end function.
     ${data}=               OperatingSystem.Get File      ${CURDIR}/../resources/srv6_local_sid_with_dx4_end_function.json
-    ${uri}=                Set Variable                  /vnf-agent/${node}/config/vpp/srv6/${AGENT_VER}/localsid/${localsidName}
+    ${uri}=                Set Variable                  /vnf-agent/${node}/config/vpp/srv6/${AGENT_VER}/localsid/${sidAddress}
     ${data}=               Replace Variables             ${data}
     Put Json     ${uri}    ${data}
 
 Put Local SID With End.DX6 function
-    [Arguments]    ${node}    ${localsidName}    ${sidAddress}    ${fibtable}    ${outinterface}    ${nexthop}
+    [Arguments]    ${node}    ${sidAddress}    ${fibtable}    ${outinterface}    ${nexthop}
     [Documentation]    Add json to etcd that configurates local SID with DX6 end function.
     ${data}=               OperatingSystem.Get File      ${CURDIR}/../resources/srv6_local_sid_with_dx6_end_function.json
-    ${uri}=                Set Variable                  /vnf-agent/${node}/config/vpp/srv6/${AGENT_VER}/localsid/${localsidName}
+    ${uri}=                Set Variable                  /vnf-agent/${node}/config/vpp/srv6/${AGENT_VER}/localsid/${sidAddress}
     ${data}=               Replace Variables             ${data}
     Put Json     ${uri}    ${data}
 
 Put Local SID With End.AD function
-    [Arguments]    ${node}    ${localsidName}    ${sidAddress}    ${outinterface}    ${ininterface}    ${l3serviceaddress}=
+    [Arguments]    ${node}    ${sidAddress}    ${outinterface}    ${ininterface}    ${l3serviceaddress}=
     [Documentation]    Add json to etcd that configurates local SID with AD end function (dynamic SR-proxy).
     ${data}=               OperatingSystem.Get File      ${CURDIR}/../resources/srv6_local_sid_with_ad_end_function.json
-    ${uri}=                Set Variable                  /vnf-agent/${node}/config/vpp/srv6/${AGENT_VER}/localsid/${localsidName}
+    ${uri}=                Set Variable                  /vnf-agent/${node}/config/vpp/srv6/${AGENT_VER}/localsid/${sidAddress}
     ${data}=               Replace Variables             ${data}
     Put Json     ${uri}    ${data}
 
 Delete Local SID
-    [Arguments]    ${node}    ${localsidName}
+    [Arguments]    ${node}    ${sidAddress}
     [Documentation]    Delete Local SID config json from etcd.
-    ${uri}=     Set Variable           /vnf-agent/${node}/config/vpp/srv6/${AGENT_VER}/localsid/${localsidName}
+    ${uri}=     Set Variable           /vnf-agent/${node}/config/vpp/srv6/${AGENT_VER}/localsid/${sidAddress}
     ${out}=     Delete key    ${uri}
     [Return]    ${out}
 

@@ -1863,7 +1863,7 @@ func (s *BgpServer) AddPath(ctx context.Context, r *api.AddPathRequest) (*api.Ad
 		if err != nil {
 			return err
 		}
-		id := uuid.NewV4()
+		id, _ := uuid.NewV4()
 		s.uuidMap[id] = pathTokey(path)
 		uuidBytes = id.Bytes()
 		return nil

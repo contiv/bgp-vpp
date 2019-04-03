@@ -1,0 +1,18 @@
+---
+uiService:
+  nodePort: 32500
+  useHTPPS: false
+
+contiv:
+  APIport: 9999
+  CRDport: 9090
+  useHTTPS: false
+  validateServerCert: false
+  useBasicAuth: false
+  basicAuthUser: user
+  basicAuthPass: pass
+
+image:
+  repository: contivvpp/ui
+  tag: latest
+  pullPolicy: IfNotPresent

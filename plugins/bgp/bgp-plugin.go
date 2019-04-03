@@ -10,10 +10,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/contiv/bgp-vpp/plugins/bgp/descriptor"
-	"github.com/contiv/vpp/plugins/crd/cache/telemetrymodel"
 	"strconv"
 
-	"github.com/contiv/vpp/plugins/contiv/model/node"
+	node "github.com/contiv/vpp/plugins/nodesync/vppnode"
 	"github.com/contiv/vpp/plugins/netctl/remote"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/any"
@@ -28,6 +27,7 @@ import (
 	"io/ioutil"
 	"log"
 	"strings"
+	"github.com/contiv/vpp/plugins/ipnet"
 )
 
 type BgpPlugin struct {
@@ -89,7 +89,7 @@ func (p *BgpPlugin) onChange(resp datasync.ProtoWatchResp) {
 	//key := resp.GetKey()
 
 	//Getting ip
-	value := &node.NodeInfo{}
+	value := &node.VppNode{}
 	changeType := resp.GetChangeType()
 	if changeType == datasync.Delete {
 		if prevValExist, err := resp.GetPrevValue(value); err != nil {
@@ -105,7 +105,11 @@ func (p *BgpPlugin) onChange(resp datasync.ProtoWatchResp) {
 			return
 		}
 	}
-	ip := value.IpAddress
+	if len(value.IpAddresses) == 0 {
+		p.Log.Warnf("no IP address available for node %v", value.Id)
+		return
+	}
+	ip := value.IpAddresses[0]
 	id := value.Id
 	ipParts := strings.Split(ip, "/")
 	ip = ipParts[0]
@@ -125,7 +129,7 @@ func (p *BgpPlugin) onChange(resp datasync.ProtoWatchResp) {
 			return
 		}
 
-		ipam := telemetrymodel.IPamEntry{}
+		ipam := ipnet.IPAMData{}
 		err = json.Unmarshal(b, &ipam)
 		if err != nil {
 			p.Log.Errorf("failed to unmarshal IpamEntry, error: %s, buffer: %+v", err, b)
@@ -133,11 +137,11 @@ func (p *BgpPlugin) onChange(resp datasync.ProtoWatchResp) {
 		}
 
 		//Setting Route info
-		podSubnetParts := strings.Split(ipam.PodNetwork, "/")
+		podSubnetParts := strings.Split(ipam.Config.PodSubnetCIDR, "/")
 		prefixLen, err := strconv.ParseUint(podSubnetParts[1], 10, 32)
 		if err != nil {
 			p.Log.Errorf("failed to convert pod subnet mask %s on node %d to uint, error %s",
-				ipam.PodNetwork, value.Id, err)
+				ipam.Config.PodSubnetCIDR, value.Id, err)
 			return
 		}
 		nlri, _ := ptypes.MarshalAny(&bgp_api.IPAddressPrefix{

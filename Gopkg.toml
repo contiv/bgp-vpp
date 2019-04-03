@@ -25,13 +25,13 @@
 #   unused-packages = true
 
 [[constraint]]
+  name = "github.com/contiv/vpp"
+  branch = "master"
+
+[[constraint]]
   name = "github.com/ligato/vpp-agent"
-  branch = "dev"
+  branch = "master"
 
 [[constraint]]
   name = "github.com/ligato/cn-infra"
-  branch = "dev"
-
-[[override]]
-  name = "github.com/satori/go.uuid"
-  version = "1.2.0"
+  branch = "master"

@@ -1,0 +1,283 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+require 'fileutils'
+
+BEGIN {
+  STATEFILE = ".vagrant-state"
+
+  # if there's a state file, set all the envvars in the current environment
+  if File.exist?(STATEFILE)
+    File.read(STATEFILE).lines.map { |x| x.split("=", 2) }.each { |x,y| ENV[x] = y.strip }
+  end
+}
+
+module VagrantPlugins
+  module EnvState
+    class Plugin < Vagrant.plugin('2')
+    name 'EnvState'
+
+    def self.up_hook(arg)
+        unless File.exist?(STATEFILE)
+        f = File.open(STATEFILE, "w")
+        ENV.each do |x,y|
+            f.puts "%s=%s" % [x,y]
+        end
+        f.close
+        end
+    end
+
+    def self.destroy_hook(arg)
+        if File.exist?(STATEFILE)
+            File.unlink(STATEFILE)
+        end
+    end
+
+    action_hook(:EnvState, :machine_action_up) do |hook|
+        hook.prepend(method(:up_hook))
+    end
+
+    action_hook(:EnvState, :machine_action_destroy) do |hook|
+        hook.prepend(method(:destroy_hook))
+    end
+    end
+  end
+end
+
+# SET ENV
+http_proxy = ENV['HTTP_PROXY'] || ENV['http_proxy'] || ''
+https_proxy = ENV['HTTPS_PROXY'] || ENV['https_proxy'] || ''
+k8s_version = ENV['K8S_VERSION']
+docker_version = ENV['DOCKER_VERSION']
+node_os = ENV['K8S_NODE_OS'] || 'ubuntu'
+node_os_release = ENV['K8S_NODE_OS_RELEASE'] || '16.04'
+node_cpus = ENV['K8S_NODE_CPUS'].to_i == 0 ? 4 : ENV['K8S_NODE_CPUS'].to_i
+node_memory = ENV['K8S_NODE_MEMORY'].to_i == 0 ? 4096 : ENV['K8S_NODE_MEMORY'].to_i
+num_nodes = ENV['K8S_NODES'].to_i == 0 ? 0 : ENV['K8S_NODES'].to_i
+master_cpus = ENV['K8S_MASTER_CPUS'].to_i == 0 ? 4 : ENV['K8S_MASTER_CPUS'].to_i
+master_memory = ENV['K8S_MASTER_MEMORY'].to_i == 0 ? 4096 : ENV['K8S_MASTER_MEMORY'].to_i
+dep_env = ENV['K8S_DEPLOYMENT_ENV']
+dep_scenario = ENV['K8S_DEPLOYMENT_SCENARIO']
+base_ip = ENV['K8S_IP_PREFIX'] || '10.20.0.'
+base_prefix_len = ENV['K8S_IP_PREFIX_LEN'] || '24'
+provider = ENV['VAGRANT_DEFAULT_PROVIDER']
+image_tag = ENV['CONTIV_IMAGE_TAG']
+go_version = ENV['GO_VERSION']
+goland_version = ENV['GOLAND_VERSION']
+helm_version = ENV['HELM_VERSION']
+crd_disabled = ENV['CRD_DISABLED']
+ip_version = ENV['IP_VERSION'] || 'ipv4'
+contiv_dir = "/home/vagrant/gopath/src/github.com/contiv/vpp"
+helm_extra_opts = ENV['HELM_EXTRA_OPTS'] || ''
+
+if (k8s_version == "1.12.3" && docker_version == "18.03.0~ce-0")
+    prebuilt = true;
+end
+
+if (ip_version == 'ipv6transport' || ip_version == 'ipv6' )
+    # ipv6 requires vagrant box with a newer OS version
+    node_os_release = '18.04'
+end
+
+if (ip_version == 'ipv6' && base_ip == '10.20.0.')
+    # use ipv6 mgmt address
+    base_ip = '2001:fd00::'
+    base_prefix_len = '64'
+end
+
+env = { }
+# Do not modify env variables after this step
+VARIABLES = ['http_proxy', 'https_proxy', 'k8s_version', 'docker_version',
+'node_os', 'node_os_release', 'node_cpus', 'node_memory', 'num_nodes', 'master_cpus',
+'master_memory', 'dep_env', 'dep_scenario', 'base_ip', 'base_prefix_len', 'provider',
+'image_tag', 'go_version', 'goland_version', 'helm_version', 'crd_disabled',
+'ip_version', 'contiv_dir', 'helm_extra_opts']
+
+VARIABLES.each do |x|
+  env[x] = eval x
+end
+
+VAGRANTFILE_API_VERSION = "2"
+  Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+    config.vm.box_check_update = false
+    if Vagrant.has_plugin?("vagrant-vbguest")
+        config.vbguest.auto_update = false
+    end
+    if node_os == "ubuntu" then
+      if prebuilt then
+          # use custom images with k8s preinstalled
+          case node_os_release
+            when "16.04"
+              config.vm.box = "samelias/contiv-ubuntu16-k8s12"
+              config.vm.box_version = "0.1.0"
+            when "18.04"
+              config.vm.box = "samelias/contiv-ubuntu18-k8s12"
+              config.vm.box_version = "0.1.0"
+            else
+              puts "Wrong node os release #{node_os_release} -- Aborting"
+              abort
+            end
+      else
+          case node_os_release
+            when "16.04"
+              config.vm.box = "puppetlabs/ubuntu-16.04-64-nocm"
+              config.vm.box_version = "1.0.0"
+            when "18.04"
+              config.vm.box = "ubuntu/bionic64"
+              config.vm.box_version = "20181008.0.0"
+            else
+              puts "Wrong node os release #{node_os_release} -- Aborting"
+              abort
+            end
+      end
+    else
+        # Nothing for now, later add more OS
+    end
+
+    node_ips = num_nodes.times.collect { |n| base_ip + "#{n+10}" }
+    node_names = num_nodes.times.collect { |n| "k8s-worker#{n+1}" }
+    config.ssh.insert_key = false
+
+    if Vagrant.has_plugin?("vagrant-cachier")
+      config.cache.scope = :box
+      config.cache.enable :apt
+    end
+    config.vm.provider 'virtualbox' do |v|
+      v.linked_clone = true if Vagrant::VERSION >= "1.8"
+      v.customize ['modifyvm', :id, '--paravirtprovider', 'kvm']
+    end
+
+    #Configure VBox Gateway
+    config.vm.define "k8s-gateway" do |gw|
+      gw.vm.hostname = "k8s-gateway"
+      # Interface for K8s Cluster
+      gw.vm.box = "puppetlabs/ubuntu-16.04-64-nocm"
+      gw.vm.box_version = "1.0.0"
+      if dep_scenario == 'nostn'
+        if crd_disabled == 'false'
+          gw.vm.network :private_network, ip: "10.130.1.254",  netmask: "255.255.254.0", virtualbox__intnet: "vpp", nic_type: "82540EM"
+        else
+          gw.vm.network :private_network, ip: "192.168.16.100", netmask: "255.255.255.0", virtualbox__intnet: "vpp", nic_type: "82540EM"
+        end
+      else
+        gw.vm.network :private_network, ip: "192.168.16.100", virtualbox__intnet: "vpp", nic_type: "82540EM"
+      end
+      if dep_scenario == 'calico'
+        gw_ip = base_ip + "1"
+        gw.vm.network :private_network, ip: gw_ip, virtualbox__intnet: "true"
+      end
+      gw.vm.provider "virtualbox" do |v|
+        v.customize ["modifyvm", :id, "--ioapic", "on"]
+        v.memory = 256
+        v.cpus = 1
+      end
+      gw.vm.provision "shell" do |s|
+        s.path = "provision/provision_gateway.sh"
+        s.env = env
+      end
+    end
+
+    # Configure VBox Master node
+    config.vm.define "k8s-master" do |k8smaster|
+      k8smaster.vm.host_name = "k8s-master"
+      k8smaster_ip = base_ip + "2"
+      k8smaster.vm.synced_folder "../", "#{contiv_dir}"
+
+      if dep_scenario != 'nostn'
+        if ip_version != 'ipv6'
+          k8smaster.vm.network :private_network, type: "dhcp", auto_config: true, virtualbox__intnet: "vpp", nic_type: "82540EM"
+          # default router
+          k8smaster.vm.provision "shell",
+            run: "always",
+            inline: "route add default gw 192.168.16.100"
+          # delete default gw on eth0
+          k8smaster.vm.provision "shell",
+            run: "always",
+            inline: "eval `route -n | awk '{ if ($8 ==\"enp0s3\" && $2 != \"0.0.0.0\") print \"route del default gw \" $2; }'`"
+        else
+          k8smaster.vm.network :private_network, ip: k8smaster_ip, netmask: "#{base_prefix_len}", virtualbox__intnet: "vpp", nic_type: "82540EM"
+        end
+      else
+        k8smaster.vm.network :private_network, auto_config: false, virtualbox__intnet: "vpp", nic_type: "82540EM"
+        k8smaster.vm.network :private_network, ip: k8smaster_ip, netmask: "#{base_prefix_len}", virtualbox__intnet: "true"
+      end
+
+      k8smaster.vm.provider "virtualbox" do |v|
+        v.customize ["modifyvm", :id, "--ioapic", "on"]
+        #v.customize ["modifyvm", :id, "--vram", "128"]
+        v.memory = master_memory
+        v.cpus = master_cpus
+        v.customize [ "modifyvm", :id, "--uartmode1", "disconnected" ]
+      end
+      k8smaster.vm.provision "shell" do |s|
+        if prebuilt then
+          s.path = "provision/provision_every_node.sh"
+        else
+          s.path = "provision/provision_every_node.sh"
+          s.args = ["install"]
+        end
+        s.env = env
+      end
+      if !prebuilt then
+        k8smaster.vm.provision "shell" do |s|
+          s.path = "provision/install_requirements_master.sh"
+          s.env = env
+        end
+      end
+      k8smaster.vm.provision "shell" do |s|
+        s.path = "provision/bootstrap_master.sh"
+        s.args = ["k8s-master", k8smaster_ip]
+        s.env = env
+      end
+    end
+
+    # Configure VBox Worker node(s)
+    num_nodes.times do |n|
+      node_name = node_names[n]
+      node_addr = node_ips[n]
+
+      config.vm.define node_name do |node|
+        node.vm.hostname = node_name
+        # Interface for K8s Cluster
+        if dep_scenario != 'nostn'
+          if ip_version != 'ipv6'
+            node.vm.network :private_network, type: "dhcp", auto_config: true, virtualbox__intnet: "vpp", nic_type: "82540EM"
+            # default router
+            node.vm.provision "shell",
+              run: "always",
+              inline: "route add default gw 192.168.16.100"
+            # delete default gw on eth0
+            node.vm.provision "shell",
+              run: "always",
+              inline: "eval `route -n | awk '{ if ($8 ==\"enp0s3\" && $2 != \"0.0.0.0\") print \"route del default gw \" $2; }'`"
+          else
+            node.vm.network :private_network, ip: node_addr, netmask: "#{base_prefix_len}", virtualbox__intnet: "vpp", nic_type: "82540EM"
+          end
+        else
+          node.vm.network :private_network, auto_config: false, virtualbox__intnet: "vpp", nic_type: "82540EM"
+          node.vm.network :private_network, ip: node_addr, netmask: "#{base_prefix_len}", virtualbox__intnet: "true"
+        end
+
+        node.vm.provider "virtualbox" do |v|
+          v.customize ["modifyvm", :id, "--ioapic", "on"]
+          v.memory = node_memory
+          v.cpus = node_cpus
+          v.customize [ "modifyvm", :id, "--uartmode1", "disconnected" ]
+        end
+        node.vm.provision "shell" do |s|
+          if prebuilt then
+            s.path = "provision/provision_every_node.sh"
+          else
+            s.path = "provision/provision_every_node.sh"
+            s.args = ["install"]
+          end
+          s.env = env
+        end
+        node.vm.provision "shell" do |s|
+          s.path = "provision/bootstrap_worker.sh"
+          s.args = [node_name, node_addr, dep_scenario, k8s_version]
+          s.env = env
+        end
+      end
+  end
+end

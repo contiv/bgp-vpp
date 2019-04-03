@@ -279,6 +279,10 @@ func (d *InterfaceDescriptor) equivalentTypeSpecificConfig(oldIntf, newIntf *int
 		if !d.equivalentVmxNet3(oldIntf.GetVmxNet3(), newIntf.GetVmxNet3()) {
 			return false
 		}
+	case interfaces.Interface_BOND_INTERFACE:
+		if !d.equivalentBond(oldIntf.GetBond(), newIntf.GetBond()) {
+			return false
+		}
 	}
 	return true
 }
@@ -321,6 +325,30 @@ func (d *InterfaceDescriptor) equivalentIPSecTunnels(oldTun, newTun *interfaces.
 func (d *InterfaceDescriptor) equivalentVmxNet3(oldVmxNet3, newVmxNet3 *interfaces.VmxNet3Link) bool {
 	return oldVmxNet3.RxqSize == newVmxNet3.RxqSize &&
 		oldVmxNet3.TxqSize == newVmxNet3.TxqSize
+}
+
+// equivalentBond compares two bond interfaces for equivalence.
+func (d *InterfaceDescriptor) equivalentBond(oldBond, newBond *interfaces.BondLink) bool {
+	if len(oldBond.BondedInterfaces) != len(newBond.BondedInterfaces) {
+		return false
+	}
+	for _, oldBondSlave := range oldBond.BondedInterfaces {
+		var found bool
+		for _, newBondSlave := range newBond.BondedInterfaces {
+			if oldBondSlave.Name == newBondSlave.Name &&
+				oldBondSlave.IsPassive == newBondSlave.IsPassive &&
+				oldBondSlave.IsLongTimeout == newBondSlave.IsLongTimeout {
+				found = true
+			}
+		}
+		if !found {
+			return false
+		}
+	}
+
+	return oldBond.Id == newBond.Id &&
+		oldBond.Mode == newBond.Mode &&
+		oldBond.Lb == newBond.Lb
 }
 
 // MetadataFactory is a factory for index-map customized for VPP interfaces.
@@ -448,9 +476,12 @@ func (d *InterfaceDescriptor) Dependencies(key string, intf *interfaces.Interfac
 		if vxlanMulticast := intf.GetVxlan().GetMulticast(); vxlanMulticast != "" {
 			dependencies = append(dependencies, kvs.Dependency{
 				Label: vxlanMulticastDep,
-				AnyOf: func(key string) bool {
-					ifName, ifaceAddr, _, isIfaceAddrKey := interfaces.ParseInterfaceAddressKey(key)
-					return isIfaceAddrKey && ifName == vxlanMulticast && ifaceAddr.IsMulticast()
+				AnyOf: kvs.AnyOfDependency{
+					KeyPrefixes: []string{interfaces.InterfaceAddressPrefix(vxlanMulticast)},
+					KeySelector: func(key string) bool {
+						_, ifaceAddr, _, _ := interfaces.ParseInterfaceAddressKey(key)
+						return ifaceAddr.IsMulticast()
+					},
 				},
 			})
 		}
@@ -478,6 +509,16 @@ func (d *InterfaceDescriptor) DerivedValues(key string, intf *interfaces.Interfa
 			Key:   interfaces.UnnumberedKey(intf.Name),
 			Value: intf.GetUnnumbered(),
 		})
+	}
+
+	// bond slave interface
+	if intf.Type == interfaces.Interface_BOND_INTERFACE && intf.GetBond() != nil {
+		for _, slaveIf := range intf.GetBond().GetBondedInterfaces() {
+			derValues = append(derValues, kvs.KeyValuePair{
+				Key:   interfaces.BondedInterfaceKey(intf.Name, slaveIf.Name),
+				Value: slaveIf,
+			})
+		}
 	}
 
 	// DHCP client

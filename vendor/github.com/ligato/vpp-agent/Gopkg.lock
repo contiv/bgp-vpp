@@ -140,6 +140,14 @@
   version = "v3.3.10"
 
 [[projects]]
+  digest = "1:536efb6849eb903912acbec0183e1b34e31cc75217b44988aedde59ad249c693"
+  name = "github.com/coreos/go-iptables"
+  packages = ["iptables"]
+  pruneopts = "UT"
+  revision = "47f22b0dd3355c0ba570ba12b0b8a36bf214c04b"
+  version = "v0.4.0"
+
+[[projects]]
   digest = "1:85968a9e07d94b5f3d15993b9884ab5fcc41c8b7b6418df8b6a3baa387bb8d68"
   name = "github.com/coreos/go-systemd"
   packages = [
@@ -490,8 +498,8 @@
   version = "v1.0"
 
 [[projects]]
-  branch = "dev"
-  digest = "1:90f60ca13b30c6c42d4f36e6a8b025ed57fb09f9baa8a0a8bd171e6c361709b6"
+  branch = "master"
+  digest = "1:f886f7e75be90937b494481fd4ea9a950339ea9c587ad3ab2b932b33ce8c641f"
   name = "github.com/ligato/cn-infra"
   packages = [
     "agent",
@@ -534,7 +542,7 @@
     "utils/safeclose",
   ]
   pruneopts = "T"
-  revision = "85c621be238e04584d322e1ddcfc795e4b2e75b3"
+  revision = "7728b023d39d088205a27be7cf1048d98467f93d"
 
 [[projects]]
   branch = "master"
@@ -992,6 +1000,7 @@
     "git.fd.io/govpp.git/cmd/binapi-generator",
     "git.fd.io/govpp.git/core",
     "github.com/buger/goterm",
+    "github.com/coreos/go-iptables/iptables",
     "github.com/fsouza/go-dockerclient",
     "github.com/go-errors/errors",
     "github.com/gogo/protobuf/gogoproto",

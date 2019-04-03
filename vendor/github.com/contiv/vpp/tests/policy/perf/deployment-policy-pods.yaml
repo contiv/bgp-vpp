@@ -1,0 +1,24 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: nginx-server-deployment
+  labels:
+    app: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      role: db
+      app: webapp
+  template:
+    metadata:
+      labels:
+        role: db
+        app: webapp
+    spec:
+      containers:
+      - image: nginx
+        imagePullPolicy: IfNotPresent
+        name: nginx-server
+        ports:
+        - containerPort: 80

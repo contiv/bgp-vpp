@@ -1,0 +1,127 @@
+#!/bin/bash
+
+set -euo pipefail
+
+# Load defaults, to be overwritten as desired
+. ./defaults
+
+while true
+do
+read -r -p "Please provide the number of workers for the Kubernetes cluster (0-50) or enter [Q/q] to exit: " input
+
+if [ $input -eq $input 2>/dev/null ]
+then
+  if (( $input >= 0 && $input <= 50))
+  then
+    export K8S_NODES=$input
+    break
+  else
+    echo "Input out of range, please try again..."
+  fi
+elif [ $input == "q" ] || [ $input == "Q" ]
+then
+ echo "Exiting..."
+ exit 0
+else
+ echo "$input is not a valid input"
+fi
+done
+echo
+
+echo 'Please choose Kubernetes environment: '
+PS3='--> '
+options=("Production" "Development" "Quit")
+select opt in "${options[@]}"
+do
+    case $opt in
+        "Production")
+            echo "You chose Production environment"
+            export K8S_DEPLOYMENT_ENV="prod"
+            break
+            ;;
+        "Development")
+            echo "You chose Development environment"
+            export K8S_DEPLOYMENT_ENV="dev"
+            break
+            ;;
+        "Quit")
+            echo "Exiting..."
+            exit 0
+            ;;
+        *) echo invalid option;;
+    esac
+done
+echo
+
+echo 'Please choose deployment scenario: '
+PS3='--> '
+options=("Without StealTheNIC" "With StealTheNIC" "IPv6" "IPv6 Transport" "IPv6 STN" "Calico" "Calico-VPP" "Quit")
+select opt in "${options[@]}"
+do
+    case $opt in
+        "Without StealTheNIC")
+            echo "You chose deployment without StealTheNIC"
+            export K8S_DEPLOYMENT_SCENARIO="nostn"
+            break
+            ;;
+        "With StealTheNIC")
+            echo "You chose deployment with StealTheNIC"
+            export K8S_DEPLOYMENT_SCENARIO="stn"
+            break
+            ;;
+        "IPv6")
+            echo "You chose deployment with IPv6"
+            export K8S_DEPLOYMENT_SCENARIO="nostn"
+            export IP_VERSION="ipv6"
+            break
+            ;;
+        "IPv6 Transport")
+            echo "You chose deployment with IPv6 Transport Only"
+            export K8S_DEPLOYMENT_SCENARIO="nostn"
+            export IP_VERSION="ipv6transport"
+            break
+            ;;
+        "IPv6 STN")
+            echo "You chose deployment with StealTheNIC and IPv6"
+            export K8S_DEPLOYMENT_SCENARIO="stn"
+            export IP_VERSION="ipv6"
+            break
+            ;;
+        "Calico")
+            echo "You chose deployment with Calico"
+            export K8S_DEPLOYMENT_SCENARIO="calico"
+            break
+            ;;
+        "Calico-VPP")
+            echo "You chose deployment with Calico-VPP"
+            export K8S_DEPLOYMENT_SCENARIO="calicovpp"
+            break
+            ;;
+        "Quit")
+            echo "Exiting..."
+            exit 0
+            ;;
+        *) echo invalid option;;
+    esac
+done
+
+if [ "$K8S_DEPLOYMENT_ENV" == "prod" ]; then 
+    DEP_ENV="production"
+else 
+    DEP_ENV="development"
+fi
+
+if [ "$K8S_DEPLOYMENT_SCENARIO" == "nostn" ]; then
+    DEP_SCEN="without STN"
+else 
+    DEP_SCEN="with STN"
+fi
+
+if [ "$IP_VERSION" == "ipv6" ] || [ "$IP_VERSION" == "ipv6transport" ] ; then
+    DEP_SCEN="with $IP_VERSION"
+fi
+
+echo
+echo "Creating a $DEP_ENV environment, $DEP_SCEN and $K8S_NODES worker node(s)"
+echo 
+./vagrant-up

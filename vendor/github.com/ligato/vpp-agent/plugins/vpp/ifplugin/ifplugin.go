@@ -14,6 +14,7 @@
 
 //go:generate descriptor-adapter --descriptor-name Interface  --value-type *vpp_interfaces.Interface --meta-type *ifaceidx.IfaceMetadata --import "ifaceidx" --import "github.com/ligato/vpp-agent/api/models/vpp/interfaces" --output-dir "descriptor"
 //go:generate descriptor-adapter --descriptor-name Unnumbered  --value-type *vpp_interfaces.Interface_Unnumbered --import "github.com/ligato/vpp-agent/api/models/vpp/interfaces" --output-dir "descriptor"
+//go:generate descriptor-adapter --descriptor-name BondedInterface  --value-type *vpp_interfaces.BondLink_BondedInterface --import "github.com/ligato/vpp-agent/api/models/vpp/interfaces" --output-dir "descriptor"
 
 package ifplugin
 
@@ -21,6 +22,7 @@ import (
 	"context"
 	"os"
 	"sync"
+	"time"
 
 	govppapi "git.fd.io/govpp.git/api"
 	"github.com/ligato/cn-infra/datasync"
@@ -137,8 +139,7 @@ func (p *IfPlugin) Init() error {
 	p.fromConfigFile()
 
 	// Fills nil dependencies with default values
-	// FIXME: for performance reasons, disabled until refactored
-	//p.publishStats = p.PublishStatistics != nil || p.NotifyStates != nil
+	p.publishStats = p.PublishStatistics != nil || p.NotifyStates != nil
 	p.fixNilPointers()
 
 	// VPP channel
@@ -168,6 +169,12 @@ func (p *IfPlugin) Init() error {
 		return err
 	}
 
+	bondIfDescriptor, bondIfDescCtx := descriptor.NewBondedInterfaceDescriptor(p.ifHandler, p.intfIndex, p.Log)
+	err = p.KVScheduler.RegisterKVDescriptor(bondIfDescriptor)
+	if err != nil {
+		return err
+	}
+
 	p.dhcpDescriptor = descriptor.NewDHCPDescriptor(p.KVScheduler, p.ifHandler, p.Log)
 	dhcpDescriptor := p.dhcpDescriptor.GetDescriptor()
 	err = p.KVScheduler.RegisterKVDescriptor(dhcpDescriptor)
@@ -190,6 +197,7 @@ func (p *IfPlugin) Init() error {
 	// pass read-only index map to descriptors
 	p.ifDescriptor.SetInterfaceIndex(p.intfIndex)
 	p.unIfDescriptor.SetInterfaceIndex(p.intfIndex)
+	bondIfDescCtx.SetInterfaceIndex(p.intfIndex)
 	p.dhcpDescriptor.SetInterfaceIndex(p.intfIndex)
 
 	// start watching for DHCP notifications
@@ -199,11 +207,7 @@ func (p *IfPlugin) Init() error {
 	if p.publishStats {
 		// subscribe & watch for resync of interface state data
 		p.resyncStatusChan = make(chan datasync.ResyncEvent)
-		p.watchStatusReg, err = p.Watcher.Watch("VPP-interface-state",
-			nil, p.resyncStatusChan, interfaces.StatePrefix)
-		if err != nil {
-			return err
-		}
+
 		p.wg.Add(1)
 		go p.watchStatusEvents()
 
@@ -215,18 +219,48 @@ func (p *IfPlugin) Init() error {
 		p.ifStateChan = make(chan *interfaces.InterfaceNotification, 1000)
 		// Interface state updater
 		p.ifStateUpdater = &InterfaceStateUpdater{}
-		if err := p.ifStateUpdater.Init(p.ctx, p.Log, p.KVScheduler, p.GoVppmux, p.intfIndex,
-			func(state *interfaces.InterfaceNotification) {
-				select {
-				case p.ifStateChan <- state:
-					// OK
-				default:
-					p.Log.Warn("Unable to send to the ifStateChan channel - channel buffer full.")
+
+		var n int
+		var t time.Time
+		ifNotifHandler := func(state *interfaces.InterfaceNotification) {
+			select {
+			case p.ifStateChan <- state:
+				// OK
+			default:
+				// full
+				if time.Since(t) > time.Second {
+					p.Log.Debugf("ifStateChan channel is full (%d)", n)
+					n = 0
+				} else {
+					n++
 				}
-			}); err != nil {
+				t = time.Now()
+			}
+		}
+
+		if err := p.ifStateUpdater.Init(p.ctx, p.Log, p.KVScheduler, p.GoVppmux, p.intfIndex, ifNotifHandler); err != nil {
 			return err
 		}
+
+		if err = p.subscribeWatcher(); err != nil {
+			return err
+		}
+
 		p.Log.Debug("ifStateUpdater Initialized")
+	}
+
+	return nil
+}
+
+func (p *IfPlugin) subscribeWatcher() (err error) {
+	keyPrefixes := []string{interfaces.StatePrefix}
+
+	p.Log.Debugf("subscribe to %d status prefixes: %v", len(keyPrefixes), keyPrefixes)
+
+	p.watchStatusReg, err = p.Watcher.Watch("vpp-if-state",
+		nil, p.resyncStatusChan, keyPrefixes...)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -266,9 +300,7 @@ func (p *IfPlugin) Close() error {
 		// state updater
 		p.ifStateUpdater,
 		// registrations
-		p.watchStatusReg,
-		// channels
-		p.resyncStatusChan, p.ifStateChan)
+		p.watchStatusReg)
 }
 
 // GetInterfaceIndex gives read-only access to map with metadata of all configured
