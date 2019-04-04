@@ -12,22 +12,21 @@ import (
 	"github.com/contiv/bgp-vpp/plugins/bgp/descriptor"
 	"strconv"
 
-	node "github.com/contiv/vpp/plugins/nodesync/vppnode"
 	"github.com/contiv/vpp/plugins/netctl/remote"
+	node "github.com/contiv/vpp/plugins/nodesync/vppnode"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/any"
 	"github.com/ligato/cn-infra/datasync"
 	"github.com/ligato/cn-infra/db/keyval"
 
+	"github.com/contiv/vpp/plugins/ipnet"
 	"github.com/ligato/cn-infra/infra"
 	"github.com/ligato/cn-infra/rpc/rest"
 	kvs "github.com/ligato/vpp-agent/plugins/kvscheduler/api"
 	bgp_api "github.com/osrg/gobgp/api"
 	gobgp "github.com/osrg/gobgp/pkg/server"
 	"io/ioutil"
-	"log"
 	"strings"
-	"github.com/contiv/vpp/plugins/ipnet"
 )
 
 type BgpPlugin struct {
@@ -46,7 +45,7 @@ type Deps struct {
 	KVStore     keyval.KvProtoPlugin
 }
 
-const nodePrefix = "/vnf-agent/contiv-ksr/allocatedIds/"
+const nodePrefix = "/vnf-agent/contiv-ksr/allocatedIDs/"
 const getIpamDataCmd = "contiv/v1/ipam"
 
 func (p *BgpPlugin) String() string {
@@ -69,16 +68,18 @@ func (p *BgpPlugin) Init() error {
 
 	p.watchCloser = make(chan string)
 	watcher := p.Deps.KVStore.NewWatcher(nodePrefix)
-	err := watcher.Watch(p.onChange, p.watchCloser, "")
+	err := watcher.Watch(p.onChange, p.watchCloser, "1")
 	if err != nil {
+		p.Log.Errorf("Failed to start the node watcher, error %s", err)
 		return err
 
 	}
 	p.nlriMap = make(map[uint32]*any.Any)
+	p.Log.Info("BGP Plugin initialized")
 	return nil
 }
 func (p *BgpPlugin) Close() error {
-	log.Println("Closing BgpPlugin Application.")
+	p.Log.Info("Closing Bgp Plugin")
 	return nil
 }
 
@@ -86,6 +87,7 @@ func (p *BgpPlugin) Close() error {
 //in the  cn-infra/db/keyval/proto_watcher_api.go in our vendor folder there isnt a ProtoWatchResp
 // but on the github for cn infra, there is one
 func (p *BgpPlugin) onChange(resp datasync.ProtoWatchResp) {
+	p.Log.Infof("onChange called, resp: %+v", resp)
 	//key := resp.GetKey()
 
 	//Getting ip
