@@ -27,11 +27,3 @@
 [[constraint]]
   name = "github.com/contiv/vpp"
   branch = "master"
-
-[[constraint]]
-  name = "github.com/ligato/vpp-agent"
-  branch = "master"
-
-[[constraint]]
-  name = "github.com/ligato/cn-infra"
-  branch = "master"

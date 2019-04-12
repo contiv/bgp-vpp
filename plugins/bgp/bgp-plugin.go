@@ -19,7 +19,7 @@ import (
 	"github.com/ligato/cn-infra/datasync"
 	"github.com/ligato/cn-infra/db/keyval"
 
-	"github.com/contiv/vpp/plugins/ipnet"
+	"github.com/contiv/vpp/plugins/ipnet/restapi"
 	"github.com/ligato/cn-infra/infra"
 	"github.com/ligato/cn-infra/rpc/rest"
 	kvs "github.com/ligato/vpp-agent/plugins/kvscheduler/api"
@@ -131,7 +131,7 @@ func (p *BgpPlugin) onChange(resp datasync.ProtoWatchResp) {
 			return
 		}
 
-		ipam := ipnet.IPAMData{}
+		ipam := restapi.NodeIPAMInfo{}
 		err = json.Unmarshal(b, &ipam)
 		if err != nil {
 			p.Log.Errorf("failed to unmarshal IpamEntry, error: %s, buffer: %+v", err, b)

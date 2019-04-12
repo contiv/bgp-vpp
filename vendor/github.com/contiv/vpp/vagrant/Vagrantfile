@@ -109,10 +109,10 @@ VAGRANTFILE_API_VERSION = "2"
           case node_os_release
             when "16.04"
               config.vm.box = "samelias/contiv-ubuntu16-k8s12"
-              config.vm.box_version = "0.1.0"
+              config.vm.box_version = "0.2.0"
             when "18.04"
               config.vm.box = "samelias/contiv-ubuntu18-k8s12"
-              config.vm.box_version = "0.1.0"
+              config.vm.box_version = "0.2.0"
             else
               puts "Wrong node os release #{node_os_release} -- Aborting"
               abort
@@ -151,16 +151,31 @@ VAGRANTFILE_API_VERSION = "2"
     config.vm.define "k8s-gateway" do |gw|
       gw.vm.hostname = "k8s-gateway"
       # Interface for K8s Cluster
-      gw.vm.box = "puppetlabs/ubuntu-16.04-64-nocm"
-      gw.vm.box_version = "1.0.0"
-      if dep_scenario == 'nostn'
-        if crd_disabled == 'false'
-          gw.vm.network :private_network, ip: "10.130.1.254",  netmask: "255.255.254.0", virtualbox__intnet: "vpp", nic_type: "82540EM"
+      case node_os_release
+        when "16.04"
+          gw.vm.box = "puppetlabs/ubuntu-16.04-64-nocm"
+          gw.vm.box_version = "1.0.0"
+        when "18.04"
+          gw.vm.box = "ubuntu/bionic64"
+          gw.vm.box_version = "20181008.0.0"
         else
-          gw.vm.network :private_network, ip: "192.168.16.100", netmask: "255.255.255.0", virtualbox__intnet: "vpp", nic_type: "82540EM"
-        end
+          # Fall back to 16.04
+          gw.vm.box = "puppetlabs/ubuntu-16.04-64-nocm"
+          gw.vm.box_version = "1.0.0"
+      end
+      if ip_version == 'ipv6'
+          gw.vm.network :private_network, ip: "fe10::2:100", netmask: "119", virtualbox__intnet: "vpp", nic_type: "82540EM"
+          gw.vm.network :private_network, ip: "#{base_ip}100", netmask: "#{base_prefix_len}", virtualbox__intnet: "true"
       else
-        gw.vm.network :private_network, ip: "192.168.16.100", virtualbox__intnet: "vpp", nic_type: "82540EM"
+          if dep_scenario == 'nostn'
+            if crd_disabled == 'false'
+              gw.vm.network :private_network, ip: "10.130.1.254",  netmask: "255.255.254.0", virtualbox__intnet: "vpp", nic_type: "82540EM"
+            else
+              gw.vm.network :private_network, ip: "192.168.16.100", netmask: "255.255.255.0", virtualbox__intnet: "vpp", nic_type: "82540EM"
+            end
+          else
+            gw.vm.network :private_network, ip: "192.168.16.100", virtualbox__intnet: "vpp", nic_type: "82540EM"
+          end
       end
       if dep_scenario == 'calico'
         gw_ip = base_ip + "1"
