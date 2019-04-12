@@ -67,7 +67,9 @@ func (d *PeerDescriptor) Create(key string, value *model.PeerConf) (metadata int
 // Delete removes an existing value.
 func (d *PeerDescriptor) Delete(key string, value *model.PeerConf, metadata interface{}) error {
 	d.log.Infof("Deleting Peer %s", value.Name)
-	err := d.server.DeletePeer(context.Background(), &bgpapi.DeletePeerRequest{})
+	err := d.server.DeletePeer(context.Background(), &bgpapi.DeletePeerRequest{
+		Address: value.NeighborAddress,
+	})
 	if err != nil {
 		return err
 	}
@@ -85,6 +87,6 @@ func (d *PeerDescriptor) Delete(key string, value *model.PeerConf, metadata inte
 }*/
 
 // Dependencies lists dependencies of the given value.
-func (d *PeerDescriptor) Dependencies(key string, value *model.PeerConf) ([]kvs.Dependency) {
+func (d *PeerDescriptor) Dependencies(key string, value *model.PeerConf) []kvs.Dependency {
 	return []kvs.Dependency{{Label: "bgp-global", Key: model.ModelBgpGlobal.KeyPrefix()}}
 }
