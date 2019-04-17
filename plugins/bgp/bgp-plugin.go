@@ -24,6 +24,7 @@ import (
 	bgp_api "github.com/osrg/gobgp/api"
 	gobgp "github.com/osrg/gobgp/pkg/server"
 	"io/ioutil"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -33,7 +34,9 @@ type BgpPlugin struct {
 	watchCloser chan string
 	nlriMap     map[uint32]*any.Any
 	nextHopMap map[uint32]string
-	//hasConfig chan bool
+	hasConfigChan chan bool
+	hasConfig bool
+	etcdInUse bool
 }
 
 //Deps is only for external dependencies
@@ -58,25 +61,27 @@ func (p *BgpPlugin) Init() error {
 		p.BGPServer = gobgp.NewBgpServer()
 		go p.BGPServer.Serve()
 	}
+	p.hasConfig = false
+	p.etcdInUse = false
 	p.nlriMap = make(map[uint32]*any.Any)
 	p.nextHopMap = make(map[uint32]string)
-	//p.hasConfig = make(chan bool)
+	p.hasConfigChan = make(chan bool)
 
-	gd := descriptor.NewGlobalConfDescriptor(p.Log, p.BGPServer)
+	gd := descriptor.NewGlobalConfDescriptor(p.Log, p.BGPServer, p.hasConfigChan)
 	p.KVScheduler.RegisterKVDescriptor(gd)
 	// register descriptor for bgp peer config
 
 	pd := descriptor.NewPeerConfDescriptor(p.Log, p.BGPServer)
 	p.KVScheduler.RegisterKVDescriptor(pd)
 	p.watchCloser = make(chan string)
+
 	watcher := p.Deps.KVStore.NewWatcher(nodePrefix)
 	err := watcher.Watch(p.onChange, p.watchCloser, "")
 	if err != nil {
 		p.Log.Errorf("Failed to start the node watcher, error %s", err)
 		return err
-
 	}
-
+	go p.addExisting()
 	p.Log.Info("BGP Plugin initialized")
 	return nil
 }
@@ -91,7 +96,9 @@ func (p *BgpPlugin) Close() error {
 func (p *BgpPlugin) onChange(resp datasync.ProtoWatchResp) {
 	p.Log.Infof("onChange called, resp: %+v", resp)
 	//key := resp.GetKey()
-
+	if !p.hasConfig {
+		return
+	}
 	//Getting ip
 	value := &vppnode.VppNode{}
 	changeType := resp.GetChangeType()
@@ -122,9 +129,23 @@ func (p *BgpPlugin) onChange(resp datasync.ProtoWatchResp) {
 
 	switch changeType {
 	case datasync.Put:
+		for {
+			if !p.etcdInUse {
+				break
+			}
+		}
+		p.etcdInUse = true
 		p.add(id, value.Name)
+		p.etcdInUse = false
 	case datasync.Delete:
+		for {
+			if !p.etcdInUse {
+				break
+			}
+		}
+		p.etcdInUse= true
 		p.delete(id)
+		p.etcdInUse = false
 	default:
 		p.Log.Errorf("GetChangeType: %v", changeType)
 	}
@@ -253,4 +274,32 @@ func getNodeInfo(client *remote.HTTPClient, base string, cmd string) ([]byte, er
 	var out bytes.Buffer
 	err = json.Indent(&out, b, "", "  ")
 	return out.Bytes(), err
+}
+
+func (p *BgpPlugin) addExisting() {
+	p.hasConfig = <-p.hasConfigChan
+	for {
+		if !p.etcdInUse {
+			break
+		}
+	}
+	p.etcdInUse = true
+	kv:= p.KVStore.NewBroker("")
+
+	itr, err := kv.ListValues(nodePrefix)
+	if err != nil {
+		fmt.Println("Failed to discover nodes in Contiv cluster")
+		os.Exit(-1)
+	}
+	for {
+		next, stop := itr.GetNext()
+		if stop {
+			break
+		}
+
+		vn := &vppnode.VppNode{}
+		next.GetValue(vn)
+		p.add(vn.Id, vn.Name)
+	}
+	p.etcdInUse = false
 }
