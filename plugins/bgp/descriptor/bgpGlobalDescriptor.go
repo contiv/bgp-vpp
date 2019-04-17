@@ -20,11 +20,12 @@ const (
 type GlobalDescriptor struct {
 	log    logging.Logger
 	server *gobgp.BgpServer
+	hasConfig chan bool
 }
 
 // NewGlobalConfDescriptor creates a new instance of the descriptor.
-func NewGlobalConfDescriptor(log logging.PluginLogger, server *gobgp.BgpServer) *kvs.KVDescriptor {
-	d := &GlobalDescriptor{log: log, server: server}
+func NewGlobalConfDescriptor(log logging.PluginLogger, server *gobgp.BgpServer,hasConfig chan bool ) *kvs.KVDescriptor {
+	d := &GlobalDescriptor{log: log, server: server, hasConfig:hasConfig}
 
 	// Set plugin descriptor init values
 	gcd := &adapter.GlobalConfDescriptor{
@@ -74,7 +75,7 @@ func (d *GlobalDescriptor) Create(key string, value *model.GlobalConf) (metadata
 		d.log.Errorf("Error creating GlobalConf = %s", err)
 		return nil, err
 	}
-
+	d.hasConfig <- true
 	return nil, nil
 }
 

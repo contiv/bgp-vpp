@@ -24,6 +24,7 @@ import (
 	bgp_api "github.com/osrg/gobgp/api"
 	gobgp "github.com/osrg/gobgp/pkg/server"
 	"io/ioutil"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -33,7 +34,11 @@ type BgpPlugin struct {
 	watchCloser chan string
 	nlriMap     map[uint32]*any.Any
 	nextHopMap map[uint32]string
-	//hasConfig chan bool
+	hasConfigChan chan bool
+	hasConfig bool
+	etcdInUse bool
+
+
 }
 
 //Deps is only for external dependencies
@@ -58,24 +63,29 @@ func (p *BgpPlugin) Init() error {
 		p.BGPServer = gobgp.NewBgpServer()
 		go p.BGPServer.Serve()
 	}
+
+	p.hasConfig = false
+	p.etcdInUse = false
 	p.nlriMap = make(map[uint32]*any.Any)
 	p.nextHopMap = make(map[uint32]string)
-	//p.hasConfig = make(chan bool)
+	p.hasConfigChan = make(chan bool)
 
-	gd := descriptor.NewGlobalConfDescriptor(p.Log, p.BGPServer)
+	gd := descriptor.NewGlobalConfDescriptor(p.Log, p.BGPServer, p.hasConfigChan)
 	p.KVScheduler.RegisterKVDescriptor(gd)
 	// register descriptor for bgp peer config
 
 	pd := descriptor.NewPeerConfDescriptor(p.Log, p.BGPServer)
 	p.KVScheduler.RegisterKVDescriptor(pd)
 	p.watchCloser = make(chan string)
+
 	watcher := p.Deps.KVStore.NewWatcher(nodePrefix)
 	err := watcher.Watch(p.onChange, p.watchCloser, "")
 	if err != nil {
 		p.Log.Errorf("Failed to start the node watcher, error %s", err)
 		return err
-
 	}
+
+	go p.addExisting()
 
 	p.Log.Info("BGP Plugin initialized")
 	return nil
@@ -91,7 +101,9 @@ func (p *BgpPlugin) Close() error {
 func (p *BgpPlugin) onChange(resp datasync.ProtoWatchResp) {
 	p.Log.Infof("onChange called, resp: %+v", resp)
 	//key := resp.GetKey()
-
+	if !p.hasConfig {
+		return
+	}
 	//Getting ip
 	value := &vppnode.VppNode{}
 	changeType := resp.GetChangeType()
@@ -122,13 +134,96 @@ func (p *BgpPlugin) onChange(resp datasync.ProtoWatchResp) {
 
 	switch changeType {
 	case datasync.Put:
+		for {
+			if !p.etcdInUse {
+				break
+			}
+		}
+		p.etcdInUse = true
 		p.add(id, value.Name)
+		p.etcdInUse = false
 	case datasync.Delete:
+		for {
+			if !p.etcdInUse {
+				break
+			}
+		}
+		p.etcdInUse= true
 		p.delete(id)
+		p.etcdInUse = false
 	default:
 		p.Log.Errorf("GetChangeType: %v", changeType)
 	}
+	ipam := restapi.NodeIPAMInfo{}
+	err = json.Unmarshal(b, &ipam)
+	if err != nil {
+		p.Log.Errorf("failed to unmarshal IpamEntry, error: %s, buffer: %+v", err, b)
+		return
+	}
+	//Setting Route info
+	ip:= ipam.NodeIP
+	podSubnetParts := strings.Split(ipam.PodSubnetThisNode, "/")
+	prefixLen, err := strconv.ParseUint(podSubnetParts[1], 10, 32)
+	if err != nil {
+		p.Log.Errorf("failed to convert pod subnet mask %s on node %d to uint, error %s",
+			ipam.PodSubnetThisNode, id, err)
+		return
+	}
+	p.Log.Infof("PREFIX: %s, ", podSubnetParts[0])
+	p.Log.Infof("PREFIXLEN: %d, ",uint32(prefixLen) )
+	nlri, _ := ptypes.MarshalAny(&bgp_api.IPAddressPrefix{
+		Prefix:    podSubnetParts[0],
+		PrefixLen: uint32(prefixLen),
+	})
+	a1, _ := ptypes.MarshalAny(&bgp_api.OriginAttribute{
+		Origin: 0,
+	})
+	a2, _ := ptypes.MarshalAny(&bgp_api.NextHopAttribute{
+		NextHop: ip,
+	})
+	attrs := []*any.Any{a1, a2}
+	p.Log.Infof("Put operation with NLRI: %v and Next Hop: %v", nlri, ip)
+	_, err = p.Deps.BGPServer.AddPath(context.Background(), &bgp_api.AddPathRequest{
+		Path: &bgp_api.Path{
+			Family: &bgp_api.Family{Afi: bgp_api.Family_AFI_IP, Safi: bgp_api.Family_SAFI_UNICAST},
+			Nlri:   nlri,
+			Pattrs: attrs,
+		},
+	})
+	if err != nil {
+		p.Log.Errorf("AddPath: %v", err)
+	}
+	p.nlriMap[id] = nlri
+	p.nextHopMap[id]=ip
+}
 
+func(p *BgpPlugin)delete(id uint32) {
+	nlri := p.nlriMap[id]
+	ip := p.nextHopMap[id]
+	if nlri == nil || ip == "" {
+		p.Log.Error("Node with id %d has not yet been added",id)
+		return
+	}
+	a1, _ := ptypes.MarshalAny(&bgp_api.OriginAttribute{
+		Origin: 0,
+	})
+	a2, _ := ptypes.MarshalAny(&bgp_api.NextHopAttribute{
+		NextHop: ip,
+	})
+	attrs := []*any.Any{a1, a2}
+	p.Log.Infof("Deleting Path with NLRI: %v", nlri)
+	err := p.Deps.BGPServer.DeletePath(context.Background(), &bgp_api.DeletePathRequest{
+		Path: &bgp_api.Path{
+			Family: &bgp_api.Family{Afi: bgp_api.Family_AFI_IP, Safi: bgp_api.Family_SAFI_UNICAST},
+			Nlri:   nlri,
+			Pattrs: attrs,
+		},
+	})
+	if err != nil {
+		p.Log.Errorf("AddPath: %v", err)
+	}
+	delete(p.nlriMap, id)
+	delete(p.nextHopMap, id)
 }
 
 func(p *BgpPlugin)add(id uint32, nodeName string) {
@@ -253,4 +348,32 @@ func getNodeInfo(client *remote.HTTPClient, base string, cmd string) ([]byte, er
 	var out bytes.Buffer
 	err = json.Indent(&out, b, "", "  ")
 	return out.Bytes(), err
+}
+
+func (p *BgpPlugin) addExisting() {
+	p.hasConfig = <-p.hasConfigChan
+	for {
+		if !p.etcdInUse {
+			break
+		}
+	}
+	p.etcdInUse = true
+	kv:= p.KVStore.NewBroker("")
+
+	itr, err := kv.ListValues(nodePrefix)
+	if err != nil {
+		fmt.Println("Failed to discover nodes in Contiv cluster")
+		os.Exit(-1)
+	}
+	for {
+		next, stop := itr.GetNext()
+		if stop {
+			break
+		}
+
+		vn := &vppnode.VppNode{}
+		next.GetValue(vn)
+		p.add(vn.Id, vn.Name)
+	}
+	p.etcdInUse = false
 }
