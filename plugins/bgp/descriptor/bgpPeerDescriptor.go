@@ -2,6 +2,7 @@ package descriptor
 
 import (
 	"context"
+	"net"
 
 	"github.com/contiv/bgp-vpp/plugins/bgp/descriptor/adapter"
 	"github.com/contiv/bgp-vpp/plugins/bgp/model"
@@ -45,6 +46,16 @@ func NewPeerConfDescriptor(log logging.PluginLogger, server *gobgp.BgpServer) *k
 
 // Create creates new value.
 func (d *PeerDescriptor) Create(key string, value *model.PeerConf) (metadata interface{}, err error) {
+	//Checks if NeighborAddress is a valid IP Address
+	if net.ParseIP(value.NeighborAddress) == nil {
+		d.log.Errorf("Invalid IP Address for NeighborAddress = %s", value.NeighborAddress)
+		return nil, err
+	}
+	//Checks if AS is above 64512 and below 65536
+	if value.PeerAs < 64512 || value.PeerAs > 65536 {
+		d.log.Errorf("Invalid AS Number = %d. AS Number should be above 64512 and below 65536", value.PeerAs)
+		return nil, err
+	}
 	d.log.Infof("Creating Peer %s,  neighbor_address = %s, peer_as = %d",
 		value.Name, value.NeighborAddress, value.PeerAs)
 	n := &bgpapi.Peer{

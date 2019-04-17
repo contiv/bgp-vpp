@@ -2,6 +2,7 @@ package descriptor
 
 import (
 	"context"
+	"net"
 
 	"github.com/contiv/bgp-vpp/plugins/bgp/descriptor/adapter"
 	"github.com/contiv/bgp-vpp/plugins/bgp/model"
@@ -44,6 +45,21 @@ func NewGlobalConfDescriptor(log logging.PluginLogger, server *gobgp.BgpServer) 
 
 // Create creates new value.
 func (d *GlobalDescriptor) Create(key string, value *model.GlobalConf) (metadata interface{}, err error) {
+	//Checks if RouterId is a valid IP Address
+	if net.ParseIP(value.RouterId) == nil {
+		d.log.Errorf("Invalid IP Address for RouterId = %s", value.RouterId)
+		return nil, err
+	}
+	//Checks if AS is above 64512 and below 65536
+	if value.As < 64512 || value.As > 65536 {
+		d.log.Errorf("Invalid AS Number = %d. AS Number should be above 64512 and below 65536", value.As)
+		return nil, err
+	}
+	//Checks if ListenPort is -1
+	if value.ListenPort != -1 {
+		d.log.Errorf("Invalid ListenPort = %d. ListenPort should be -1", value.ListenPort)
+		return nil, err
+	}
 	d.log.Infof("Creating GlobalConf As = %d, RouterId = %s, ListenPort = %d",
 		value.As, value.RouterId, value.ListenPort)
 	err = d.server.StartBgp(context.Background(), &bgpapi.StartBgpRequest{
@@ -53,6 +69,7 @@ func (d *GlobalDescriptor) Create(key string, value *model.GlobalConf) (metadata
 			ListenPort: value.ListenPort,
 		},
 	})
+
 	if err != nil {
 		d.log.Errorf("Error creating GlobalConf = %s", err)
 		return nil, err
